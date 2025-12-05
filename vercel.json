@@ -11,16 +11,5 @@
       "src": "/(.*)",
       "dest": "main.py"
     }
-  ],
-  "ignore": [
-    "gweasy.py",
-    "*.md",
-    "__pycache__/**",
-    ".git/**",
-    "node_modules/**",
-    "tests/**",
-    "docs/**",
-    ".env",
-    "*.pyc"
   ]
 }
