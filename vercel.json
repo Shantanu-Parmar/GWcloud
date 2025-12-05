@@ -12,17 +12,15 @@
       "dest": "main.py"
     }
   ],
-  "excludeFiles": [
-    "**/*.py",           // Exclude all Python files except main.py (your gweasy.py is too big!)
-    "gweasy.py",         // Specifically skip the huge original file
-    "**/__pycache__/**", // Python caches
-    "**/.git/**",        // Git junk
-    "**/node_modules/**",// If any JS sneaks in
-    "*.md",              // READMEs
-    "**/tests/**",       // Test folders
-    "**/docs/**",        // Docs
-    ".env",              // Env files
-    "**/*.pyc",          // Compiled Python
-    "requirements.txt"   // We don't need this in the bundle
+  "ignore": [
+    "gweasy.py",
+    "*.md",
+    "__pycache__/**",
+    ".git/**",
+    "node_modules/**",
+    "tests/**",
+    "docs/**",
+    ".env",
+    "*.pyc"
   ]
 }
