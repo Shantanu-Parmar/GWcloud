@@ -4,10 +4,10 @@ gunicorn==23.0.0
 jinja2==3.1.4
 python-multipart==0.0.9
 httpx==0.27.0
-gwpy==3.0.10
-gwosc==0.7.2
-gwdatafind==1.1.0
-lalsuite==7.21
-python-nds2-client==1.1.0
-requests-pelican==0.1.2
-pandas==2.2.2
+gwpy
+gwosc
+gwdatafind
+lalsuite
+python-nds2-client
+requests-pelican
+pandas
