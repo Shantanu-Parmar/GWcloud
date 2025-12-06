@@ -8,6 +8,5 @@ gwpy
 gwosc
 gwdatafind
 lalsuite
-python-nds2-client
 requests-pelican
 pandas
