@@ -16,9 +16,34 @@ logger = logging.getLogger("gravfetch")
 DEFAULT_GWFOUT = "./uploads/GWFout"
 os.makedirs(DEFAULT_GWFOUT, exist_ok=True)
 
-def log(msg, level="info"):
-    logger.log({"error": logging.ERROR, "warning": logging.WARNING, "success": logging.INFO}.get(level, logging.INFO), msg)
-    return f"[{level.upper()}] {msg"
+# At the top of core/gravfetch.py (replace your old log function)
+
+def log(msg: str, level: str = "info") -> str:
+    """Safe logging + returns colored string for SSE"""
+    level = level.lower()
+    level_map = {
+        "debug": logging.DEBUG,
+        "info": logging.INFO,
+        "success": logging.INFO,
+        "warning": logging.WARNING,
+        "error": logging.ERROR,
+        "critical": logging.CRITICAL,
+    }
+    log_level = level_map.get(level, logging.INFO)
+    logger.log(log_level, msg)
+
+    # Pretty prefix for web terminal
+    colors = {
+        "info": "cyan",
+        "success": "text-green-400",
+        "warning": "text-yellow-400",
+        "error": "text-red-500",
+        "critical": "text-purple-500",
+        "debug": "text-blue-400",
+    }
+    color_class = colors.get(level, "text-gray-400")
+    prefix = f'<span class="{color_class} font-bold">[{level.upper()}]</span>'
+    return f"{prefix} {msg}"
 
 # === OSDF DOWNLOAD ===
 def download_osdf(detector_code, frametype, segments, output_dir=DEFAULT_GWFOUT):
