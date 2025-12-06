@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
+jinja2
 gwpy
-python-multipart
-pandas
-PyQt5
+gwosc
 requests-pelican
+# PyQt5 is NOT installed on server → no crash
