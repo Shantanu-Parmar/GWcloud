@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}OMICRON{% endblock %}
+
+{% block content %}
+<div class="min-h-screen hero" style="background-color:#0D0D2B">
+  <div class="hero-content max-w-6xl mx-auto px-6 py-12">
+
+    <div class="card w-full">
+      <h1 class="text-5xl font-bold text-center mb-10 text-gw-yellow">
+        OMICRON – Trigger Generator
+      </h1>
+
+      <!-- Channel & FFL selection -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div>
+          <label class="label text-gw-teal text-lg">Channel (auto-filled from GWFout)</label>
+          <select id="channel-select" class="select select-bordered w-full bg-gw-card text-white">
+            <option>Loading channels...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="label text-gw-teal text-lg">Generated fin.ffl</label>
+          <input type="text" id="ffl-path" readonly class="input input-bordered w-full bg-gw-card" placeholder="Will appear after segment selection">
+        </div>
+      </div>
+
+      <!-- Segment selection from chosen channel -->
+      <div class="mb-8">
+        <h3 class="text-2xl mb-4 text-gw-orange">Select Time Segments</h3>
+        <div id="segment-list" class="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-4 bg-gw-card/50 rounded-xl">
+          <p class="col-span-full text-center text-gray-400">Choose a channel first</p>
+        </div>
+        <div class="mt-4 flex gap-4">
+          <button onclick="toggleAllSegments()" class="btn bg-gw-teal hover:bg-gw-yellow text-black">Toggle All</button>
+          <button onclick="generateFFL()" class="btn btn-gw">Generate fin.ffl & Start OMICRON</button>
+        </div>
+      </div>
+
+      <!-- Config editor (same as your PyQt5 app) -->
+      <details class="collapse collapse-arrow bg-gw-card/70 mb-8">
+        <summary class="collapse-title text-xl font-bold text-gw-yellow">Advanced Config.txt Editor</summary>
+        <div class="collapse-content">
+          <textarea id="config-text" class="textarea textarea-bordered w-full h-96 font-mono text-sm bg-black text-gw-teal" spellcheck="false">{{ config_content }}</textarea>
+          <button onclick="saveConfig()" class="btn btn-sm mt-3 bg-gw-yellow text-black">Save config.txt</button>
+        </div>
+      </details>
+
+      <!-- Live Terminal -->
+      <h2 class="text-3xl mb-4 text-gw-teal">Live OMICRON Output</h2>
+      <pre id="omicron-log" class="terminal"></pre>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Load available channels from server
+async function loadChannels() {
+  const res = await fetch('/api/channels');
+  const channels = await res.json();
+  const sel = document.getElementById('channel-select');
+  sel.innerHTML = '<option value="">– Select channel –</option>';
+  channels.forEach(ch => {
+    const opt = document.createElement('option');
+    opt.value = ch.path;
+    opt.textContent = ch.name;
+    sel.appendChild(opt);
+  });
+}
+
+// Load segments when channel changes
+document.getElementById('channel-select').addEventListener('change', async function() {
+  const path = this.value;
+  document.getElementById('ffl-path').value = '';
+  const container = document.getElementById('segment-list');
+  if (!path) {
+    container.innerHTML = '<p class="col-span-full text-center text-gray-400">Choose a channel first</p>';
+    return;
+  }
+
+  const res = await fetch(`/api/segments?dir=${encodeURIComponent(path)}`);
+  const segments = await res.json();
+  container.innerHTML = '';
+  segments.forEach(seg => {
+    const label = document.createElement('label');
+    label.className = 'label cursor-pointer justify-start gap-3';
+    label.innerHTML = `
+      <input type="checkbox" class="checkbox checkbox-accent" value="${seg}">
+      <span class="label-text text-white">${seg} (${(parseInt(seg.split('_')[1]) - parseInt(seg.split('_')[0]))}s)</span>
+    `;
+    container.appendChild(label);
+  });
+});
+
+function toggleAllSegments() {
+  document.querySelectorAll('#segment-list input[type="checkbox"]').forEach(cb => cb.checked = !cb.checked);
+}
+
+async function generateFFL() {
+  const channelPath = document.getElementById('channel-select').value;
+  const selected = Array.from(document.querySelectorAll('#segment-list input:checked'))
+                       .map(cb => cb.value);
+
+  if (!channelPath || selected.length === 0) {
+    alert("Please select a channel and at least one segment");
+    return;
+  }
+
+  const log = document.getElementById('omicron-log');
+  log.textContent = 'Generating fin.ffl...\n';
+
+  const res = await fetch('/api/omicron/run', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ channel_dir: channelPath, segments: selected.join(',') })
+  });
+
+  document.getElementById('ffl-path').value = 'fin.ffl generated – running OMICRON...';
+
+  const es = new EventSource('/api/omicron/stream'); // we'll upgrade this in v2
+  // For now we simulate with the response stream
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value);
+    let lines = buffer.split('\n');
+    buffer = lines.pop();
+    lines.forEach(line => {
+      if (line.startsWith('data: ')) {
+        const p = document.createElement('div');
+        p.textContent = line.slice(6);
+        if (line.includes('SUCCESS')) p.className = 'text-green-400';
+        if (line.includes('ERROR')) p.className = 'text-red-400';
+        log.appendChild(p);
+        log.scrollTop = log.scrollHeight;
+      }
+    });
+  }
+}
+
+async function saveConfig() {
+  const content = document.getElementById('config-text').value;
+  await fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: content
+  });
+  alert("config.txt saved!");
+}
+
+// Load everything on page load
+window.onload = () => {
+  loadChannels();
+  // Load current config.txt
+  fetch('/config.txt').then(r => r.text()).then(txt => {
+    document.getElementById('config-text').value = txt;
+  });
+};
+</script>
+{% endblock %}

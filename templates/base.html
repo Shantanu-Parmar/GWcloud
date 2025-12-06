@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GWeasy Web{% endblock %} - Surfing Spacetime’s Waves</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                fontFamily: { sans: ['Inter', 'sans-serif'] },
+                colors: {
+                    gw: { 
+                        dark: '#0D0D2B', card: '#1A1A3D', 
+                        teal: '#00C4B4', orange: '#FF5733', yellow: '#FFC107' 
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0D0D2B; color: white; font-family: 'Inter', sans-serif; }
+        .hero { 
+            background: linear-gradient(180deg, rgba(0,196,180,0.7), rgba(255,87,51,0.7)),
+                        url('https://github.com/Shantanu-Parmar/GWeasy/raw/main/images/starry-bg.jpg') center/cover no-repeat;
+            position: relative;
+            overflow: hidden;
+        }
+        .grid-warp {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'..."); /* your warp grid */
+            animation: warp 20s linear infinite;
+            opacity: 0.3;
+        }
+        @keyframes warp { 0% { transform: translateY(0); } 100% { transform: translateY(-10%); } }
+        .divider { background: linear-gradient(90deg, #00C4B4, #FFC107, #FF5733); height: 3px; }
+        .btn-gw { @apply bg-gw-yellow text-gw-dark font-bold py-3 px-8 rounded-lg hover:bg-orange-500 transition shadow-lg pulse; }
+        .card { @apply bg-gw-card p-8 rounded-2xl shadow-2xl border border-gw-teal/30; }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .terminal { background: black; color: #00B7EB; font-family: 'Consolas'; padding: 1rem; border-radius: 1rem; height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-gradient-to-r from-gw-teal to-gw-orange text-white shadow-2xl fixed top-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
+            <div class="flex items-center space-x-3">
+                <img src="https://raw.githubusercontent.com/Shantanu-Parmar/GWeasy/main/logo.png" class="h-10">
+                <h1 class="text-2xl font-bold">GWeasy</h1>
+            </div>
+            <div class="space-x-8">
+                <a href="/" class="hover:bg-gw-yellow hover:text-gw-dark px-4 py-2 rounded transition">Home</a>
+                <a href="/gravfetch" class="hover:bg-gw-yellow hover:text-gw-dark px-4 py-2 rounded transition">Gravfetch</a>
+                <a href="/omicron" class="hover:bg-gw-yellow hover:text-gw-dark px-4 py-2 rounded transition">OMICRON</a>
+                <a href="https://github.com/Shantanu-Parmar/GWeasy" target="_blank" class="hover:bg-gw-yellow hover:text-gw-dark px-4 py-2 rounded transition">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 pt-20">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gradient-to-r from-gw-teal to-gw-orange text-white py-6">
+        <div class="text-center">
+            <p>© 2025 GWeasy – Gravitational Wave analysis made Easy</p>
+            <p class="text-sm mt-2">By Shantanusinh Parmar • Now on the Web</p>
+        </div>
+    </footer>
+</body>
+</html>

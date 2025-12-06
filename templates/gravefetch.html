@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Gravfetch{% endblock %}
+{% block content %}
+<div class="hero min-h-screen">
+  <div class="hero-overlay bg-opacity-60"></div>
+  <div class="hero-content text-center text-white">
+    <div class="max-w-4xl card">
+      <h1 class="text-5xl font-bold mb-8 text-gw-yellow">Gravfetch – Data Downloader</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- OSDF -->
+        <div class="card">
+          <h2 class="text-2xl mb-4 text-gw-teal">OSDF (Public Large Files)</h2>
+          <input type="text" id="osdf-detector" placeholder="e.g. H" class="input input-bordered w-full mb-96 bg-gw-card">
+          <input type="text" id="osdf-frametype" placeholder="Frame type" class="input input-bordered w-full mb-4 bg-gw-card">
+          <textarea id="osdf-segments" placeholder="1234567890_1234577890&#10;one per line or comma" class="textarea textarea-bordered h-32 bg-gw-card"></textarea>
+          <button onclick="startOSDF()" class="btn btn-gw mt-4">Start OSDF Download</button>
+        </div>
+
+        <!-- NDS -->
+        <div class="card">
+          <h2 class="text-2xl mb-4 text-gw-orange">NDS (Quick Fetch)</h2>
+          <input type="text" id="nds-channel" placeholder="e.g. H1:GDS-CALIB_STRAIN" class="input input-bordered w-full mb-4 bg-gw-card">
+          <textarea id="nds-segments" placeholder="GPS segments, comma or newline" class="textarea textarea-bordered h-32 bg-gw-card"></textarea>
+          <button onclick="startNDS()" class="btn btn-gw mt-4">Start NDS Fetch</button>
+        </div>
+      </div>
+
+      <div class="mt-12">
+        <h2 class="text-3xl mb-4">Live Terminal</h2>
+        <pre id="log" class="terminal"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function startOSDF() { runJob('/api/gravfetch/osdf', {
+    detector_code: document.getElementById('osdf-detector').value,
+    frametype: document.getElementById('osdf-frametype').value,
+    segments: document.getElementById('osdf-segments').value.replace(/\\n/g, ',')
+}); }
+
+function startNDS() { runJob('/api/gravfetch/nds', {
+    channel: document.getElementById('nds-channel').value,
+    segments: document.getElementById('nds-segments').value.replace(/\\n/g, ',')
+}); }
+
+function runJob(url, data) {
+    const log = document.getElementById('log');
+    log.innerHTML = '';
+    const es = new EventSource(url, { withCredentials: true });
+    es.onmessage = e => {
+        const p = document.createElement('div class="text-gw-yellow">");
+        p.textContent = e.data.replace(/\\[\\w+\\]/g, '');
+        log.appendChild(p);
+        log.scrollTop = log.scrollHeight;
+    };
+    es.onerror = () => { es.close(); log.innerHTML += '<p class="text-red-rose-400">Stream ended.</p>'; };
+}
+</script>
+{% endblock %}
