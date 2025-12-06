@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-jinja2
-gwpy
-gwosc
-requests-pelican
-# PyQt5 is NOT installed on server → no crash
