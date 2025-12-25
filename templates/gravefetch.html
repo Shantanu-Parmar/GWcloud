@@ -1,62 +1,161 @@
 {% extends "base.html" %}
 {% block title %}Gravfetch{% endblock %}
+
 {% block content %}
-<div class="hero min-h-screen">
-  <div class="hero-overlay bg-opacity-60"></div>
-  <div class="hero-content text-center text-white">
-    <div class="max-w-4xl card">
-      <h1 class="text-5xl font-bold mb-8 text-gw-yellow">Gravfetch – Data Downloader</h1>
+<div class="min-h-screen bg-gw-dark text-white">
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <h1 class="text-5xl font-bold text-center mb-12 text-gw-yellow">Gravfetch – Data Fetching</h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- OSDF -->
-        <div class="card">
-          <h2 class="text-2xl mb-4 text-gw-teal">OSDF (Public Large Files)</h2>
-          <input type="text" id="osdf-detector" placeholder="e.g. H" class="input input-bordered w-full mb-96 bg-gw-card">
-          <input type="text" id="osdf-frametype" placeholder="Frame type" class="input input-bordered w-full mb-4 bg-gw-card">
-          <textarea id="osdf-segments" placeholder="1234567890_1234577890&#10;one per line or comma" class="textarea textarea-bordered h-32 bg-gw-card"></textarea>
-          <button onclick="startOSDF()" class="btn btn-gw mt-4">Start OSDF Download</button>
+    <!-- Main Tabs: Public vs LIGO Assoc -->
+    <div class="tabs tabs-boxed mb-8 justify-center">
+      <a class="tab tab-lg tab-active" onclick="showTab('public')">Public</a>
+      <a class="tab tab-lg" onclick="showTab('assoc')">LIGO Assoc</a>
+    </div>
+
+    <!-- PUBLIC SECTION -->
+    <div id="public-section">
+      <!-- Sub-tabs for Public -->
+      <div class="tabs tabs-boxed mb-8 justify-center">
+        <a class="tab tab-lg tab-active" onclick="showSubTab('osdf')">OSDF</a>
+        <a class="tab tab-lg" onclick="showSubTab('nds')">NDS</a>
+        <a class="tab tab-lg" onclick="showSubTab('bulk')">Bulk Fetch (NDS)</a>
+      </div>
+
+      <!-- OSDF Tab -->
+      <div id="osdf-tab" class="card bg-gw-card p-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div>
+            <label class="label text-gw-teal">Detectors</label>
+            <select id="osdf-detector" class="select select-bordered w-full bg-gw-dark" onchange="loadFrameTypes()">
+              <option value="">-- Select --</option>
+              <option value="H">LIGO-Hanford (H)</option>
+              <option value="L">LIGO-Livingston (L)</option>
+              <option value="V">Virgo (V)</option>
+              <option value="K">KAGRA (K)</option>
+            </select>
+          </div>
+          <div>
+            <label class="label text-gw-teal">Frame Types</label>
+            <select id="osdf-frametype" class="select select-bordered w-full bg-gw-dark" onchange="loadOSDFSegments()">
+              <option>-- Select Detector First --</option>
+            </select>
+          </div>
+          <div>
+            <label class="label text-gw-teal">Time Segments</label>
+            <select multiple id="osdf-segments" class="select select-bordered w-full h-48 bg-gw-dark">
+            </select>
+          </div>
         </div>
 
-        <!-- NDS -->
-        <div class="card">
-          <h2 class="text-2xl mb-4 text-gw-orange">NDS (Quick Fetch)</h2>
-          <input type="text" id="nds-channel" placeholder="e.g. H1:GDS-CALIB_STRAIN" class="input input-bordered w-full mb-4 bg-gw-card">
-          <textarea id="nds-segments" placeholder="GPS segments, comma or newline" class="textarea textarea-bordered h-32 bg-gw-card"></textarea>
-          <button onclick="startNDS()" class="btn btn-gw mt-4">Start NDS Fetch</button>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <input type="text" id="osdf-start" placeholder="Custom GPS Start" class="input input-bordered bg-gw-dark">
+          <input type="text" id="osdf-end" placeholder="Custom GPS End" class="input input-bordered bg-gw-dark">
+        </div>
+
+        <div class="flex gap-4 justify-center">
+          <button class="btn bg-gw-teal hover:bg-gw-yellow text-black" onclick="refreshOSDF()">Refresh Lists</button>
+          <button class="btn btn-gw pulse" onclick="startOSDFDownload()">Download Data</button>
+          <button class="btn bg-gw-orange" onclick="stopExecution()">Start/Stop Execution</button>
+          <button class="btn bg-gw-yellow text-black" onclick="chooseOutputDir()">Select Output Dir</button>
         </div>
       </div>
 
-      <div class="mt-12">
-        <h2 class="text-3xl mb-4">Live Terminal</h2>
-        <pre id="log" class="terminal"></pre>
+      <!-- NDS Tab -->
+      <div id="nds-tab" class="card bg-gw-card p-8 hidden">
+        <!-- Similar structure: Detector → Group → Channel → Segments -->
+        <!-- We'll add this next if you confirm OSDF looks good -->
+        <p class="text-center py-20 text-xl">NDS tab coming next — same layout as PyQt5</p>
       </div>
+
+      <!-- Bulk NDS Tab -->
+      <div id="bulk-tab" class="card bg-gw-card p-8 hidden">
+        <p class="text-center py-20 text-xl">Bulk Fetch (CSV upload) coming next</p>
+      </div>
+    </div>
+
+    <!-- LIGO Assoc SECTION -->
+    <div id="assoc-section" class="hidden">
+      <div class="card bg-gw-card p-8">
+        <p class="text-center py-20 text-xl">LIGO Assoc tab (CSV + server selection) coming next</p>
+      </div>
+    </div>
+
+    <!-- Live Terminal Output -->
+    <div class="mt-12 card bg-black p-6 rounded-xl">
+      <h2 class="text-3xl mb-4 text-gw-teal">Live Terminal</h2>
+      <pre id="terminal" class="text-cyan-400 font-mono h-96 overflow-y-auto p-4 bg-gray-900 rounded"></pre>
     </div>
   </div>
 </div>
 
 <script>
-function startOSDF() { runJob('/api/gravfetch/osdf', {
-    detector_code: document.getElementById('osdf-detector').value,
-    frametype: document.getElementById('osdf-frametype').value,
-    segments: document.getElementById('osdf-segments').value.replace(/\\n/g, ',')
-}); }
-
-function startNDS() { runJob('/api/gravfetch/nds', {
-    channel: document.getElementById('nds-channel').value,
-    segments: document.getElementById('nds-segments').value.replace(/\\n/g, ',')
-}); }
-
-function runJob(url, data) {
-    const log = document.getElementById('log');
-    log.innerHTML = '';
-    const es = new EventSource(url, { withCredentials: true });
-    es.onmessage = e => {
-        const p = document.createElement('div class="text-gw-yellow">");
-        p.textContent = e.data.replace(/\\[\\w+\\]/g, '');
-        log.appendChild(p);
-        log.scrollTop = log.scrollHeight;
-    };
-    es.onerror = () => { es.close(); log.innerHTML += '<p class="text-red-rose-400">Stream ended.</p>'; };
+function showTab(tab) {
+  document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
+  document.getElementById('assoc-section').classList.toggle('hidden', tab !== 'assoc');
 }
+
+function showSubTab(sub) {
+  document.getElementById('osdf-tab').classList.toggle('hidden', sub !== 'osdf');
+  document.getElementById('nds-tab').classList.toggle('hidden', sub !== 'nds');
+  document.getElementById('bulk-tab').classList.toggle('hidden', sub !== 'bulk');
+}
+
+async function loadFrameTypes() {
+  const det = document.getElementById('osdf-detector').value;
+  if (!det) return;
+  const res = await fetch(`/api/osdf/frametypes?detector=${det}`);
+  const types = await res.json();
+  const select = document.getElementById('osdf-frametype');
+  select.innerHTML = '<option>-- Select Frame Type --</option>';
+  types.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    select.appendChild(opt);
+  });
+}
+
+async function loadOSDFSegments() {
+  const det = document.getElementById('osdf-detector').value;
+  const ft = document.getElementById('osdf-frametype').value;
+  if (!det || !ft) return;
+  const res = await fetch(`/api/osdf/segments?detector=${det}&frametype=${ft}`);
+  const segs = await res.json();
+  const select = document.getElementById('osdf-segments');
+  select.innerHTML = '';
+  segs.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    select.appendChild(opt);
+  });
+}
+
+async function startOSDFDownload() {
+  const det = document.getElementById('osdf-detector').value;
+  const ft = document.getElementById('osdf-frametype').value;
+  const segSelect = document.getElementById('osdf-segments');
+  const selectedSegs = Array.from(segSelect.selectedOptions).map(o => o.value);
+  const start = document.getElementById('osdf-start').value;
+  const end = document.getElementById('osdf-end').value;
+  if (start && end) selectedSegs.push(`${start}_${end}`);
+
+  if (!det || !ft || selectedSegs.length === 0) {
+    alert("Please select detector, frame type, and at least one segment");
+    return;
+  }
+
+  const es = new EventSource(`/api/gravfetch/osdf?detector=${det}&frametype=${ft}&segments=${selectedSegs.join(',')}`);
+  const term = document.getElementById('terminal');
+  term.textContent = '';
+  es.onmessage = e => {
+    const line = document.createElement('div');
+    line.textContent = e.data;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+  };
+}
+
+// Add other functions: refresh, stop, output dir, etc.
 </script>
 {% endblock %}
