@@ -5,6 +5,7 @@ import pandas as pd
 import logging
 from requests_pelican import get as rp_get
 from gwdatafind import find_urls
+from requests import Session
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gravfetch")
@@ -46,6 +47,10 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
     host = "https://datafind.gw-openscience.org"
     downloaded = 0
 
+    # Create a plain session with verification disabled
+    session = requests.Session()
+    session.verify = False
+
     for seg in segments:
         try:
             start, end = map(int, seg.split("_"))
@@ -58,7 +63,10 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
 
         try:
             yield log(f"Finding URLs for {channel} {start}-{end}...", "info")
-            urls = find_urls(detector_code, frametype, start, end, urltype='osdf', host=host)
+            urls = find_urls(
+                detector_code, frametype, start, end,
+                urltype='osdf', host=host, session=session  # <-- This bypasses the SSL error
+            )
         except Exception as e:
             yield log(f"find_urls error {seg}: {e}", "error")
             continue
@@ -79,7 +87,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
 
             try:
                 yield log(f"Downloading {filename}...", "info")
-                r = rp_get(url, timeout=180, verify=False)  # This line fixes the SSL error
+                r = rp_get(url, timeout=180, verify=False)
                 r.raise_for_status()
 
                 with open(filepath, "wb") as f:
