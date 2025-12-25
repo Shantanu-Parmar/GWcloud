@@ -1,82 +1,87 @@
 # app.py
-from fastapi import FastAPI, Request, Form, File, UploadFile, BackgroundTasks
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import os, uuid, shutil
+from pydantic import BaseModel
+import os
+import glob
+import asyncio
+import re
+import subprocess
+from gwdatafind import find_types
+from gwpy.detector import ChannelList
+
 from core.gravfetch import download_osdf, download_nds
 from core.omicron import run_omicron, generate_fin_ffl
-import re
-import asyncio
-app = FastAPI(title="GWeasy Web")
+
+app = FastAPI(title="GWcloud - GWeasy Web")
+
+# Mount static folder
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Templates
 templates = Jinja2Templates(directory="templates")
 
+# Uploads directory
 UPLOADS = "./uploads"
 os.makedirs(UPLOADS, exist_ok=True)
 
-# === Home ===
+# Global log for live streaming
+current_job_log: list[str] = []
+
+# === Pages ===
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# === Gravfetch Page ===
 @app.get("/gravfetch", response_class=HTMLResponse)
 async def gravfetch_page(request: Request):
     return templates.TemplateResponse("gravfetch.html", {"request": request})
 
-# === Omicron Page ===
 @app.get("/omicron", response_class=HTMLResponse)
 async def omicron_page(request: Request):
     return templates.TemplateResponse("omicron.html", {"request": request})
 
-# === Live log streaming (used by both tabs) ===
-def event_stream(generator):
-    yield "data: GWeasy Web terminal ready...\n\n"
-    for line in generator:
-        yield f"data: {line}\n\n"
-
-@app.post("/api/gravfetch/osdf")
-async def api_osdf(
-    detector_code: str = Form(...),
-    frametype: str = Form(...),
-    segments: str = Form(...)  # e.g. "1234567890_1234577890,..."
-):
-    segs = segments.split(",")
-    return StreamingResponse(event_stream(download_osdf(detector_code, frametype, segs)), media_type="text/event-stream")
-
+# === NDS Download (direct streaming - kept as is) ===
 @app.post("/api/gravfetch/nds")
-async def api_nds(channel: str = Form(...), segments: str = Form(...)):
+async def api_nds(channel: str, segments: str):
     segs = [s.strip() for s in segments.split(",") if s.strip()]
-    return StreamingResponse(event_stream(download_nds(channel, segs)), media_type="text/event-stream")
+    def generator():
+        for line in download_nds(channel, segs):
+            yield line
+    return StreamingResponse(generator(), media_type="text/plain")
 
+# === Omicron Run (direct streaming - kept as is) ===
 @app.post("/api/omicron/run")
-async def api_omicron(channel_dir: str = Form(...), segments: str = Form(...)):
+async def api_omicron(channel_dir: str, segments: str):
     segs = [s.strip() for s in segments.split(",") if s.strip()]
     ffl = generate_fin_ffl(channel_dir, segs)
-    return StreamingResponse(event_stream(run_omicron(ffl)), media_type="text/event-stream")
+    def generator():
+        for line in run_omicron(ffl):
+            yield line
+    return StreamingResponse(generator(), media_type="text/plain")
 
-# Download results
+# === File Download ===
 @app.get("/download/{path:path}")
 async def download(path: str):
     file = os.path.join(UPLOADS, path)
     if os.path.exists(file):
         return FileResponse(file)
     return {"error": "File not found"}
-import glob
 
-# Serve config.txt
+# === Config.txt ===
 @app.get("/config.txt")
 async def get_config():
     return FileResponse("config.txt")
 
 @app.post("/api/config")
-async def save_config(content: str = Form(...)):
+async def save_config(content: str):
     with open("config.txt", "w") as f:
         f.write(content)
     return {"status": "saved"}
 
-# List channels in GWFout
+# === List channels and segments in GWFout ===
 @app.get("/api/channels")
 async def list_channels():
     channels = []
@@ -86,7 +91,6 @@ async def list_channels():
             channels.append({"name": name, "path": d})
     return channels
 
-# List segments inside a channel directory
 @app.get("/api/segments")
 async def list_segments(dir: str):
     segments = []
@@ -95,11 +99,7 @@ async def list_segments(dir: str):
             segments.append(os.path.basename(d))
     return sorted(segments)
 
-import subprocess
-from gwdatafind import find_types
-from gwpy.detector import ChannelList
-
-# === OSDF: Get Frame Types ===
+# === OSDF Dropdown APIs (using CLI - working on Render) ===
 @app.get("/api/osdf/frametypes")
 async def api_osdf_frametypes(detector: str):
     if detector not in ["H", "L", "V", "K"]:
@@ -110,9 +110,8 @@ async def api_osdf_frametypes(detector: str):
         types = [line.strip() for line in result.stdout.splitlines() if line.strip() and not line.startswith("#")]
         return types or ["No frame types available"]
     except Exception as e:
-        return ["Error fetching types"]
+        return [f"Error: {str(e)}"]
 
-# === OSDF: Get Time Segments ===
 @app.get("/api/osdf/segments")
 async def api_osdf_segments(detector: str, frametype: str):
     if not detector or not frametype:
@@ -130,9 +129,9 @@ async def api_osdf_segments(detector: str, frametype: str):
                     segments.append(f"{start}_{end}")
         return segments or ["No segments available"]
     except Exception as e:
-        return ["Error fetching segments"]
+        return [f"Error: {str(e)}"]
 
-# === NDS: Get Groups (for selected detector) ===
+# === NDS Dropdown APIs ===
 @app.get("/api/nds/groups")
 async def api_nds_groups(detector: str):
     if detector not in ["H1", "L1", "V1", "K1"]:
@@ -148,7 +147,6 @@ async def api_nds_groups(detector: str):
     except Exception as e:
         return ["Error fetching groups"]
 
-# === NDS: Get Channels in Group ===
 @app.get("/api/nds/channels")
 async def api_nds_channels(detector: str, group: str):
     try:
@@ -161,40 +159,44 @@ async def api_nds_channels(detector: str, group: str):
     except Exception as e:
         return ["Error fetching channels"]
 
-from pydantic import BaseModel
+# === NEW OSDF DOWNLOAD SYSTEM (Pydantic + Background + Live Streaming) ===
 
 class OSDFRequest(BaseModel):
     detector: str
     frametype: str
     segments: list[str]
 
-current_job_log = []
-
 @app.post("/api/gravfetch/osdf")
 async def trigger_osdf_download(request: OSDFRequest, background_tasks: BackgroundTasks):
     global current_job_log
-    current_job_log = []  # Reset logs for new job
-    background_tasks.add_task(run_osdf_background, request.detector, request.frametype, request.segments)
-    return {"status": "started", "message": "Download triggered – watch terminal for live logs"}
+    current_job_log = []  # Reset for new job
 
-def run_osdf_background(detector, frametype, segments):
+    current_job_log.append(f"[INFO] Starting OSDF download for {request.detector}:{request.frametype}")
+    current_job_log.append(f"[INFO] Requested segments: {', '.join(request.segments)}")
+
+    background_tasks.add_task(run_osdf_background, request.detector, request.frametype, request.segments)
+
+    return {"status": "started", "message": "Download started – see live terminal"}
+
+def run_osdf_background(detector: str, frametype: str, segments: list[str]):
     global current_job_log
-    current_job_log.append(f"[INFO] Starting OSDF download for {detector}:{frametype}")
-    current_job_log.append(f"[INFO] Segments: {', '.join(segments)}")
-    for line in download_osdf(detector, frametype, segments):
-        current_job_log.append(line)
-    current_job_log.append("[SUCCESS] OSDF download completed!")
-        
+    try:
+        for log_line in download_osdf(detector, frametype, segments):
+            current_job_log.append(log_line)
+        current_job_log.append("[SUCCESS] OSDF download completed successfully!")
+    except Exception as e:
+        current_job_log.append(f"[ERROR] Download failed: {str(e)}")
+
 @app.get("/api/gravfetch/osdf/stream")
 async def osdf_stream():
     async def event_generator():
         global current_job_log
-        seen = 0
+        last_seen = 0
         while True:
-            if seen < len(current_job_log):
-                for i in range(seen, len(current_job_log)):
+            if last_seen < len(current_job_log):
+                for i in range(last_seen, len(current_job_log)):
                     yield f"data: {current_job_log[i]}\n\n"
-                seen = len(current_job_log)
-            await asyncio.sleep(0.5)  # Check frequently
+                last_seen = len(current_job_log)
+            await asyncio.sleep(0.5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
