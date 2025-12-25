@@ -9,6 +9,8 @@ from requests_pelican import get as rp_get
 from gwdatafind import find_urls
 import os
 from gwdatafind import Session
+from igwn_auth_utils import Session as IgwnSession
+
 os.environ['GWDATAFIND_PUBLIC'] = '1'
 
 logging.basicConfig(level=logging.INFO)
@@ -52,7 +54,8 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
     downloaded = 0
 
     # Plain session with SSL verification disabled
-    session = Session(verify=False)
+    session = IgwnSession()  # Creates igwn_auth_utils.Session (handles token_audience etc.)
+    session.verify = False
 
     for seg in segments:
         try:
@@ -68,7 +71,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
             yield log(f"Finding URLs for {channel} {start}-{end}...", "info")
             urls = find_urls(
                 detector_code, frametype, start, end,
-                urltype='osdf', host=host, session=session, token_audience=None  # Explicitly None for public
+                urltype='osdf', host=host  # No session= or token_audience= needed
             )
         except Exception as e:
             yield log(f"find_urls error {seg}: {str(e)}", "error")
@@ -90,12 +93,12 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
 
             try:
                 yield log(f"Downloading {filename}...", "info")
-                r = rp_get(url, timeout=180, verify=False)
+                # Use rp_get without verify kwarg – it handles public OSDF perfectly
+                r = rp_get(url, timeout=180)
                 r.raise_for_status()
 
                 with open(filepath, "wb") as f:
                     f.write(r.content)
-
                 parts = filename.split("-")
                 timestamp = int(parts[-2])
                 duration = int(parts[-1].replace(".gwf", ""))
@@ -106,7 +109,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
 
                 downloaded += 1
                 yield log(f"Saved {filename}", "success")
-                time.sleep(1.5)
+                time.sleep(1.5)  # Polite rate-limiting
             except Exception as e:
                 yield log(f"Download failed {filename}: {str(e)}", "error")
 
