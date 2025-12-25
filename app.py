@@ -201,59 +201,75 @@ async def osdf_stream():
             await asyncio.sleep(0.5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-    
+
 @app.get("/api/downloads")
 async def api_downloads():
     base_dir = "./uploads/GWFout"
-    if not os.path.exists(base_dir):
-        return {"channels": []}
-    
     channels = []
-    for ch_dir in sorted(os.listdir(base_dir)):
-        full_ch_dir = os.path.join(base_dir, ch_dir)
-        if not os.path.isdir(full_ch_dir):
-            continue
-        channel_name = ch_dir.replace("_", ":", 1)  # H_H1_... → H:H1...
-        
-        segments = []
-        for seg_dir in sorted(os.listdir(full_ch_dir)):
-            full_seg_dir = os.path.join(full_ch_dir, seg_dir)
-            if not os.path.isdir(full_seg_dir):
+
+    if not os.path.exists(base_dir):
+        return {"channels": channels}
+
+    try:
+        for ch_dir_name in sorted(os.listdir(base_dir)):
+            ch_full_path = os.path.join(base_dir, ch_dir_name)
+            if not os.path.isdir(ch_full_path):
                 continue
-            
-            files = []
-            seg_path = os.path.join(full_ch_dir, seg_dir)
-            for f in sorted(os.listdir(seg_path)):
-                if f.endswith(".gwf"):
-                    file_path = f"uploads/GWFout/{ch_dir}/{seg_dir}/{f}"
-                    files.append({
-                        "name": f,
-                        "path": file_path,
-                        "size": os.path.getsize(os.path.join(seg_path, f))
-                    })
-            
-            # Add fin.ffl if exists
-            fin_path = os.path.join(full_ch_dir, "fin.ffl")
-            fin_info = None
-            if os.path.exists(fin_path):
-                fin_info = {
-                    "name": "fin.ffl",
-                    "path": f"uploads/GWFout/{ch_dir}/fin.ffl",
-                    "size": os.path.getsize(fin_path)
-                }
-            
-            segments.append({
-                "name": seg_dir,
-                "files": files,
-                "fin": fin_info
-            })
-        
-        channels.append({
-            "name": channel_name,
-            "path": ch_dir,
-            "segments": segments
-        })
-    
+
+            # Convert directory name back to channel name: replace only the first '_' with ':'
+            channel_name = ch_dir_name.replace("_", ":", 1)
+
+            segments = []
+            for seg_dir_name in sorted(os.listdir(ch_full_path)):
+                seg_full_path = os.path.join(ch_full_path, seg_dir_name)
+
+                # Skip fin.ffl and non-directories
+                if seg_dir_name == "fin.ffl":
+                    continue
+                if not os.path.isdir(seg_full_path):
+                    continue
+
+                gwf_files = []
+                for filename in sorted(os.listdir(seg_full_path)):
+                    if filename.endswith(".gwf"):
+                        file_full_path = os.path.join(seg_full_path, filename)
+                        rel_path = os.path.join("uploads/GWFout", ch_dir_name, seg_dir_name, filename).replace("\\", "/")
+                        size = os.path.getsize(file_full_path)
+                        gwf_files.append({
+                            "name": filename,
+                            "path": rel_path,
+                            "size": size
+                        })
+
+                # Add fin.ffl for this channel (at channel level)
+                fin_full_path = os.path.join(ch_full_path, "fin.ffl")
+                fin_info = None
+                if os.path.exists(fin_full_path):
+                    fin_rel_path = os.path.join("uploads/GWFout", ch_dir_name, "fin.ffl").replace("\\", "/")
+                    fin_info = {
+                        "name": "fin.ffl",
+                        "path": fin_rel_path,
+                        "size": os.path.getsize(fin_full_path)
+                    }
+
+                segments.append({
+                    "name": seg_dir_name,
+                    "duration": int(seg_dir_name.split("_")[1]) - int(seg_dir_name.split("_")[0]),
+                    "files": gwf_files,
+                    "fin": fin_info  # Will be same for all segments of channel
+                })
+
+            if segments:  # Only add channel if it has segments
+                channels.append({
+                    "name": channel_name,
+                    "dir": ch_dir_name,
+                    "segments": segments
+                })
+
+    except Exception as e:
+        print(f"Error scanning downloads: {e}")
+        return {"channels": channels, "error": str(e)}
+
     return {"channels": channels}
 
 @app.get("/downloads", response_class=HTMLResponse)
