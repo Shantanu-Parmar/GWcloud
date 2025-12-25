@@ -161,25 +161,29 @@ async def api_nds_channels(detector: str, group: str):
     except Exception as e:
         return ["Error fetching channels"]
 
-import asyncio
-from fastapi import BackgroundTasks
+from pydantic import BaseModel
+
+class OSDFRequest(BaseModel):
+    detector: str
+    frametype: str
+    segments: list[str]
 
 current_job_log = []
 
 @app.post("/api/gravfetch/osdf")
-async def trigger_osdf_download(data: dict, background_tasks: BackgroundTasks):
+async def trigger_osdf_download(request: OSDFRequest, background_tasks: BackgroundTasks):
     global current_job_log
-    current_job_log = []  # Clear previous logs
-    segments = data["segments"]
-    detector = data["detector"]
-    frametype = data["frametype"]
-    background_tasks.add_task(run_osdf_background, detector, frametype, segments)
-    return {"status": "Download started", "message": "Check live terminal for progress"}
+    current_job_log = []  # Reset logs for new job
+    background_tasks.add_task(run_osdf_background, request.detector, request.frametype, request.segments)
+    return {"status": "started", "message": "Download triggered – watch terminal for live logs"}
 
 def run_osdf_background(detector, frametype, segments):
     global current_job_log
+    current_job_log.append(f"[INFO] Starting OSDF download for {detector}:{frametype}")
+    current_job_log.append(f"[INFO] Segments: {', '.join(segments)}")
     for line in download_osdf(detector, frametype, segments):
         current_job_log.append(line)
+    current_job_log.append("[SUCCESS] OSDF download completed!")
         
 @app.get("/api/gravfetch/osdf/stream")
 async def osdf_stream():
