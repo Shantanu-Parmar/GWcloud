@@ -4,6 +4,10 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:$PORT
+    buildCommand: |
+      conda create -n env python=3.10
+      conda activate env
+      conda install -c conda-forge gwpy gwdatafind lalsuite requests-pelican python-nds2-client igwn-auth-utils -y
+      pip install -r requirements.txt  # Install remaining pip deps
+    startCommand: conda run -n env --no-capture-output gunicorn app:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:$PORT
     autoDeploy: true
