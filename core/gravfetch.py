@@ -50,7 +50,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
     ch_dir = os.path.join(output_dir, channel.replace(":", "_"))
     os.makedirs(ch_dir, exist_ok=True)
     fin_path = os.path.join(ch_dir, "fin.ffl")
-    host = "https://datafind.gw-openscience.org"
+    host = "https://datafind.gwosc.org"
     downloaded = 0
 
     # Plain session with SSL verification disabled
