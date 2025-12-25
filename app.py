@@ -93,3 +93,69 @@ async def list_segments(dir: str):
         if os.path.isdir(d) and "_" in os.path.basename(d):
             segments.append(os.path.basename(d))
     return sorted(segments)
+
+import subprocess
+from gwdatafind import find_types
+from gwpy.detector import ChannelList
+
+# === OSDF: Get Frame Types ===
+@app.get("/api/osdf/frametypes")
+async def api_osdf_frametypes(detector: str):
+    if detector not in ["H", "L", "V", "K"]:
+        return []
+    try:
+        cmd = ["gw_data_find", "-r", "datafind.gwosc.org", "-o", detector, "--show-types"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        types = [line.strip() for line in result.stdout.splitlines() if line.strip() and not line.startswith("#")]
+        return types or ["No frame types available"]
+    except Exception as e:
+        return ["Error fetching types"]
+
+# === OSDF: Get Time Segments ===
+@app.get("/api/osdf/segments")
+async def api_osdf_segments(detector: str, frametype: str):
+    if not detector or not frametype:
+        return []
+    try:
+        cmd = ["gw_data_find", "-r", "datafind.gwosc.org", "-o", detector, "-t", frametype, "--show-times"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        segments = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line and not line.startswith("#"):
+                parts = line.split()
+                if len(parts) >= 4:
+                    start, end = int(parts[1]), int(parts[2])
+                    segments.append(f"{start}_{end}")
+        return segments or ["No segments available"]
+    except Exception as e:
+        return ["Error fetching segments"]
+
+# === NDS: Get Groups (for selected detector) ===
+@app.get("/api/nds/groups")
+async def api_nds_groups(detector: str):
+    if detector not in ["H1", "L1", "V1", "K1"]:
+        return ["Invalid detector"]
+    try:
+        chanlist = ChannelList.query_nds2(f'{detector}:*', host='nds.gwosc.org')
+        groups = set()
+        for chan in chanlist:
+            match = re.match(rf'^{detector}:([A-Z]+)-?.*', chan.name)
+            if match:
+                groups.add(match.group(1))
+        return sorted(groups) or ["No groups available"]
+    except Exception as e:
+        return ["Error fetching groups"]
+
+# === NDS: Get Channels in Group ===
+@app.get("/api/nds/channels")
+async def api_nds_channels(detector: str, group: str):
+    try:
+        chanlist = ChannelList.query_nds2(f'{detector}:*', host='nds.gwosc.org')
+        channels = []
+        for chan in chanlist:
+            if re.match(rf'^{detector}:{group}-?.*', chan.name):
+                channels.append(f"{chan.name} ({chan.sample_rate})")
+        return channels or ["No channels available"]
+    except Exception as e:
+        return ["Error fetching channels"]
