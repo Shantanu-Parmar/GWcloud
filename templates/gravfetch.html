@@ -57,7 +57,7 @@
           <span class="loading loading-spinner loading-sm hidden" id="refresh-spinner"></span>
           Refresh Lists
         </button>
-        <button class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg pulse" onclick="startOSDFDownload()">
+        <button id="download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg" onclick="startOSDFDownload()">
           <span class="loading loading-spinner loading-md hidden" id="download-spinner"></span>
           Start Download
         </button>
@@ -187,6 +187,10 @@ async function startOSDFDownload() {
 }
 
 
+// Optional: show spinner on click
+document.getElementById('download-btn').addEventListener('click', () => {
+  document.getElementById('download-spinner').classList.remove('hidden');
+});
   
 function refreshOSDF() {
   document.getElementById('refresh-spinner').classList.remove('hidden');
