@@ -3,9 +3,11 @@ import os
 import time
 import pandas as pd
 import logging
+import requests
+from requests import Session
 from requests_pelican import get as rp_get
 from gwdatafind import find_urls
-from requests import Session
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gravfetch")
