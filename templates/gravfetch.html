@@ -131,13 +131,14 @@ async function loadOSDFSegments() {
   });
 }
 
+
 async function startOSDFDownload() {
   const det = document.getElementById('osdf-detector').value;
   const ft = document.getElementById('osdf-frametype').value;
   const segSelect = document.getElementById('osdf-segments');
   const selectedSegs = Array.from(segSelect.selectedOptions).map(o => o.value);
-  const start = document.getElementById('osdf-start').value;
-  const end = document.getElementById('osdf-end').value;
+  const start = document.getElementById('osdf-start').value.trim();
+  const end = document.getElementById('osdf-end').value.trim();
   if (start && end) selectedSegs.push(`${start}_${end}`);
 
   if (!det || !ft || selectedSegs.length === 0) {
@@ -145,6 +146,35 @@ async function startOSDFDownload() {
     return;
   }
 
+  // Show loading
+  document.getElementById('terminal').innerHTML = '<div class="text-gw-yellow">Starting download... <span class="loading loading-spinner loading-md"></span></div>';
+
+  // POST request to trigger background download + SSE streaming
+  fetch('/api/gravfetch/osdf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      detector: det,
+      frametype: ft,
+      segments: selectedSegs
+    })
+  });
+
+  // Connect to live log stream
+  const es = new EventSource('/api/gravfetch/osdf/stream');
+  es.onmessage = e => {
+    const line = document.createElement('div');
+    if (e.data.includes('SUCCESS')) line.className = 'text-green-400';
+    else if (e.data.includes('ERROR')) line.className = 'text-red-500';
+    else if (e.data.includes('Downloading')) line.className = 'text-gw-yellow';
+    else line.className = 'text-white';
+    line.textContent = e.data;
+    document.getElementById('terminal').appendChild(line);
+    document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+  };
+}
+
+  
   const es = new EventSource(`/api/gravfetch/osdf?detector=${det}&frametype=${ft}&segments=${selectedSegs.join(',')}`);
   const term = document.getElementById('terminal');
   term.textContent = '';
