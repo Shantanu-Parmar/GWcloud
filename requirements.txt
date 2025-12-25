@@ -10,3 +10,4 @@ gwdatafind
 lalsuite
 requests-pelican
 pandas
+requests
