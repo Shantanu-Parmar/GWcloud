@@ -52,12 +52,20 @@
           <input type="text" id="osdf-end" placeholder="Custom GPS End" class="input input-bordered bg-gw-dark">
         </div>
 
-        <div class="flex gap-4 justify-center">
-          <button class="btn bg-gw-teal hover:bg-gw-yellow text-black" onclick="refreshOSDF()">Refresh Lists</button>
-          <button class="btn btn-gw pulse" onclick="startOSDFDownload()">Download Data</button>
-          <button class="btn bg-gw-orange" onclick="stopExecution()">Start/Stop Execution</button>
-          <button class="btn bg-gw-yellow text-black" onclick="chooseOutputDir()">Select Output Dir</button>
-        </div>
+      <div class="flex flex-wrap gap-4 justify-center mt-8">
+        <button class="btn btn-wide bg-gw-teal hover:bg-gw-yellow text-black font-bold shadow-lg" onclick="refreshOSDF()">
+          <span class="loading loading-spinner loading-sm hidden" id="refresh-spinner"></span>
+          Refresh Lists
+        </button>
+        <button class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg pulse" onclick="startOSDFDownload()">
+          <span class="loading loading-spinner loading-md hidden" id="download-spinner"></span>
+          Start Download
+        </button>
+        <button class="btn btn-wide bg-gw-orange hover:bg-red-600 text-white font-bold shadow-lg" onclick="stopExecution()">
+          Stop Execution
+        </button>
+      </div>
+        
       </div>
 
       <!-- NDS Tab -->
