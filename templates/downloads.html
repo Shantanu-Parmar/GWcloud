@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Downloads{% endblock %}
+
+{% block content %}
+<div class="min-h-screen hero" style="background-color:#0D0D2B">
+  <div class="hero-content max-w-6xl mx-auto px-6 py-12">
+
+    <div class="card w-full">
+      <h1 class="text-5xl font-bold text-center mb-10 text-gw-yellow">
+        My Downloads
+      </h1>
+
+      <div id="downloads-content" class="space-y-8">
+        <p class="text-center text-gray-400">Your downloaded gravitational wave data will appear here.</p>
+        <p class="text-center text-gw-teal text-sm">Files are temporarily stored on the server. Download them now!</p>
+      </div>
+
+      <div class="mt-8 text-center">
+        <button onclick="refreshDownloads()" class="btn bg-gw-teal hover:bg-gw-yellow text-black">
+          Refresh List
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadDownloads() {
+  const res = await fetch('/api/downloads');
+  const data = await res.json();
+  const container = document.getElementById('downloads-content');
+  
+  if (data.channels.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-12">
+        <p class="text-2xl text-gray-500 mb-4">No downloads yet</p>
+        <p class="text-gw-teal">Go to <a href="/gravfetch" class="link text-gw-yellow">Gravfetch</a> and download some data!</p>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  data.channels.forEach(ch => {
+    html += `
+      <div class="collapse collapse-arrow bg-gw-card/70 border border-gw-teal/30">
+        <input type="checkbox" />
+        <div class="collapse-title text-xl font-bold text-gw-yellow">
+          ${ch.name} (${ch.segments.length} segment${ch.segments.length > 1 ? 's' : ''})
+        </div>
+        <div class="collapse-content">
+    `;
+
+    ch.segments.forEach(seg => {
+      html += `
+        <div class="ml-6 mt-4">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-gw-teal font-semibold">${seg.name}</span>
+            ${seg.fin ? `<a href="/download/${seg.fin.path}" class="btn btn-sm bg-gw-orange hover:bg-gw-yellow text-black">Download fin.ffl</a>` : ''}
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ml-6">
+      `;
+
+      if (seg.files.length === 0) {
+        html += `<p class="text-gray-500 text-sm">No .gwf files</p>`;
+      } else {
+        seg.files.forEach(file => {
+          const sizeMB = (file.size / (1024*1024)).toFixed(2);
+          html += `
+            <a href="/download/${file.path}" class="btn btn-sm bg-gw-teal hover:bg-gw-yellow text-black flex justify-between">
+              <span class="truncate max-w-48">${file.name}</span>
+              <span class="text-xs opacity-75">${sizeMB} MB</span>
+            </a>
+          `;
+        });
+      }
+
+      html += `</div></div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function refreshDownloads() {
+  document.getElementById('downloads-content').innerHTML = '<p class="text-center text-gw-yellow">Loading downloads...</p>';
+  loadDownloads();
+}
+
+// Load on page open
+window.onload = () => {
+  loadDownloads();
+  // Auto-refresh every 30 seconds (useful during long downloads)
+  setInterval(loadDownloads, 30000);
+};
+</script>
+{% endblock %}
