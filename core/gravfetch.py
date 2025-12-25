@@ -7,7 +7,8 @@ import requests
 from requests import Session
 from requests_pelican import get as rp_get
 from gwdatafind import find_urls
-
+import os
+os.environ['GWDATAFIND_PUBLIC'] = '1'
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("gravfetch")
@@ -40,7 +41,6 @@ def log(msg: str, level: str = "info") -> str:
     prefix = f'<span class="{color_class} font-bold">[{level.upper()}]</span>'
     return f"{prefix} {msg}"
     
-
 def download_osdf(detector_code: str, frametype: str, segments: list[str], output_dir: str = DEFAULT_GWFOUT):
     os.makedirs(output_dir, exist_ok=True)
     channel = f"{detector_code}:{frametype}"
@@ -50,7 +50,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
     host = "https://datafind.gw-openscience.org"
     downloaded = 0
 
-    # Create a plain session with verification disabled
+    # Plain session with SSL verification disabled
     session = requests.Session()
     session.verify = False
 
@@ -68,10 +68,10 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
             yield log(f"Finding URLs for {channel} {start}-{end}...", "info")
             urls = find_urls(
                 detector_code, frametype, start, end,
-                urltype='osdf', host=host, session=session  # <-- This bypasses the SSL error
+                urltype='osdf', host=host, session=session
             )
         except Exception as e:
-            yield log(f"find_urls error {seg}: {e}", "error")
+            yield log(f"find_urls error {seg}: {str(e)}", "error")
             continue
 
         if not urls:
@@ -108,7 +108,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
                 yield log(f"Saved {filename}", "success")
                 time.sleep(1.5)
             except Exception as e:
-                yield log(f"Download failed {filename}: {e}", "error")
+                yield log(f"Download failed {filename}: {str(e)}", "error")
 
     yield log(f"OSDF complete – {downloaded} file(s) downloaded", "success")
 
