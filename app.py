@@ -275,3 +275,14 @@ async def api_downloads():
 @app.get("/downloads", response_class=HTMLResponse)
 async def downloads_page(request: Request):
     return templates.TemplateResponse("downloads.html", {"request": request})
+    
+@app.get("/debug/files")
+async def debug_files():
+    files = []
+    base = "./uploads/GWFout"
+    if os.path.exists(base):
+        for root, _, fs in os.walk(base):
+            for f in fs:
+                rel = os.path.relpath(os.path.join(root, f))
+                files.append(rel)
+    return {"files": files or "No files (cleared or not downloaded yet)"}
