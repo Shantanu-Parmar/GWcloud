@@ -240,7 +240,7 @@ function refreshOSDF() {
 
 
 // NDS
-  async function loadNDSGroups() {
+async function loadNDSGroups() {
   const det = document.getElementById('nds-detector').value;
   if (!det) return;
   const res = await fetch(`/api/nds/groups?detector=${det}`);
@@ -273,27 +273,38 @@ async function loadNDSChannels() {
 
 async function startNDSDownload() {
   const channel = document.getElementById('nds-channel').value;
-  const segSelect = document.getElementById('nds-segments');
-  const selectedSegs = Array.from(segSelect.selectedOptions).map(o => o.value);
   const start = document.getElementById('nds-start').value.trim();
   const end = document.getElementById('nds-end').value.trim();
-  if (start && end) selectedSegs.push(`${start}_${end}`);
 
-  if (!channel || selectedSegs.length === 0) {
-    alert("Please select a channel and at least one segment");
+  if (!channel || !start || !end) {
+    alert("Please select a channel and enter custom GPS start/end");
     return;
   }
+
+  const segments = [`${start}_${end}`];
 
   const term = document.getElementById('terminal');
   term.innerHTML = '<div class="text-gw-yellow">Starting NDS fetch...</div>';
 
   await fetch('/api/gravfetch/nds', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `channel=${encodeURIComponent(channel)}&segments=${encodeURIComponent(selectedSegs.join(','))}`
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ channel: channel, segments: segments })
   });
 
-  const es = new EventSource('/api/gravfetch/osdf/stream'); // reuse or add new stream for NDS
+  // Reuse OSDF stream or create new one — for now reuse
+  const es = new EventSource('/api/gravfetch/osdf/stream');
+  es.onmessage = function(e) {
+    const line = document.createElement('div');
+    const text = e.data;
+    if (text.includes('[SUCCESS]')) line.className = 'text-green-400';
+    else if (text.includes('[ERROR]')) line.className = 'text-red-500';
+    else if (text.includes('Fetching')) line.className = 'text-gw-yellow';
+    else line.className = 'text-white';
+    line.textContent = text;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+  };
 }
 </script>
 {% endblock %}
