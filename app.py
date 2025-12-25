@@ -160,3 +160,35 @@ async def api_nds_channels(detector: str, group: str):
         return channels or ["No channels available"]
     except Exception as e:
         return ["Error fetching channels"]
+
+from fastapi import BackgroundTasks
+
+current_job_log = []
+
+@app.post("/api/gravfetch/osdf")
+async def trigger_osdf_download(data: dict, background_tasks: BackgroundTasks):
+    global current_job_log
+    current_job_log = []
+    segments = data["segments"]
+    background_tasks.add_task(run_osdf_background, data["detector"], data["frametype"], segments)
+    return {"status": "started"}
+
+def run_osdf_background(detector, frametype, segments):
+    global current_job_log
+    for line in download_osdf(detector, frametype, segments):
+        current_job_log.append(line)
+
+@app.get("/api/gravfetch/osdf/stream")
+async def osdf_stream():
+    def event_generator():
+        global current_job_log
+        yielded = 0
+        while True:
+            if yielded < len(current_job_log):
+                yield current_job_log[yielded]
+                yielded += 1
+            elif len(current_job_log) > yielded:
+                yield current_job_log[yielded]
+                yielded += 1
+            await asyncio.sleep(0.5)
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
