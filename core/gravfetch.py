@@ -11,6 +11,28 @@ from gwdatafind import find_urls
 import logging
 import urllib3
 
+import requests
+import urllib3
+
+# Disable SSL verification and warnings for the entire session
+requests.packages.urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# Monkey-patch requests to always skip verification
+old_get = requests.get
+old_post = requests.post
+def new_get(*args, **kwargs):
+    kwargs.setdefault('verify', False)
+    return old_get(*args, **kwargs)
+def new_post(*args, **kwargs):
+    kwargs.setdefault('verify', False)
+    return old_post(*args, **kwargs)
+requests.get = new_get
+requests.post = new_post
+
+
+
+
+
+
 # Disable SSL warnings (safe for public GWOSC data)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
