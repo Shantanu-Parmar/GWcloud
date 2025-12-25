@@ -7,7 +7,7 @@ import os, uuid, shutil
 from core.gravfetch import download_osdf, download_nds
 from core.omicron import run_omicron, generate_fin_ffl
 import re
-
+import asyncio
 app = FastAPI(title="GWeasy Web")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
