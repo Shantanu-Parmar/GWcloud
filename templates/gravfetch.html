@@ -4,140 +4,157 @@
 {% block content %}
 <div class="min-h-screen bg-gw-dark text-white">
   <div class="max-w-7xl mx-auto px-6 py-12">
-    <h1 class="text-5xl font-bold text-center mb-12 text-gw-yellow">Gravfetch – Data Fetching</h1>
+    <h1 class="text-5xl font-bold text-center mb-12 text-gw-yellow drop-shadow-lg">
+      Gravfetch – Gravitational Wave Data Fetching
+    </h1>
 
     <!-- Main Tabs: Public vs LIGO Assoc -->
-    <div class="tabs tabs-boxed mb-8 justify-center">
-      <a class="tab tab-lg tab-active" onclick="showTab('public')">Public</a>
-      <a class="tab tab-lg" onclick="showTab('assoc')">LIGO Assoc</a>
+    <div class="tabs tabs-boxed mb-12 justify-center bg-gw-card/40 backdrop-blur-sm">
+      <a id="tab-public" class="tab tab-lg tab-active text-gw-teal font-bold" onclick="switchMainTab('public')">
+        Public Data (GWOSC)
+      </a>
+      <a id="tab-assoc" class="tab tab-lg text-gw-orange font-bold" onclick="switchMainTab('assoc')">
+        LIGO Assoc (Restricted)
+      </a>
     </div>
 
     <!-- PUBLIC SECTION -->
     <div id="public-section">
-      <!-- Sub-tabs for Public -->
-      <div class="tabs tabs-boxed mb-8 justify-center">
-        <a class="tab tab-lg tab-active" onclick="showSubTab('osdf')">OSDF</a>
-        <a class="tab tab-lg" onclick="showSubTab('nds')">NDS</a>
-        <a class="tab tab-lg" onclick="showSubTab('bulk')">Bulk Fetch (NDS)</a>
+      <!-- Sub-tabs: OSDF / NDS / Bulk -->
+      <div class="tabs tabs-boxed mb-10 justify-center bg-gw-card/30">
+        <a id="subtab-osdf" class="tab tab-lg tab-active" onclick="switchSubTab('osdf')">OSDF Frames</a>
+        <a id="subtab-nds" class="tab tab-lg" onclick="switchSubTab('nds')">NDS Channel</a>
+        <a id="subtab-bulk" class="tab tab-lg" onclick="switchSubTab('bulk')">Bulk NDS</a>
       </div>
 
-      <!-- OSDF Tab -->
-      <div id="osdf-tab" class="card bg-gw-card p-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <!-- OSDF TAB -->
+      <div id="osdf-tab" class="card bg-gw-card/80 backdrop-blur p-8 rounded-2xl shadow-2xl border border-gw-teal/20">
+        <h2 class="text-3xl font-bold mb-8 text-gw-teal text-center">OSDF – Bulk Frame Download</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
-            <label class="label text-gw-teal">Detectors</label>
-            <select id="osdf-detector" class="select select-bordered w-full bg-gw-dark" onchange="loadFrameTypes()">
-              <option value="">-- Select --</option>
-              <option value="H">LIGO-Hanford (H)</option>
-              <option value="L">LIGO-Livingston (L)</option>
+            <label class="label text-gw-teal text-lg font-semibold">Detector</label>
+            <select id="osdf-detector" class="select select-bordered w-full bg-gw-dark/80 text-white" onchange="loadFrameTypes()">
+              <option value="">-- Select Detector --</option>
+              <option value="H">LIGO Hanford (H)</option>
+              <option value="L">LIGO Livingston (L)</option>
               <option value="V">Virgo (V)</option>
               <option value="K">KAGRA (K)</option>
             </select>
           </div>
+
           <div>
-            <label class="label text-gw-teal">Frame Types</label>
-            <select id="osdf-frametype" class="select select-bordered w-full bg-gw-dark" onchange="loadOSDFSegments()">
+            <label class="label text-gw-teal text-lg font-semibold">Frame Type</label>
+            <select id="osdf-frametype" class="select select-bordered w-full bg-gw-dark/80 text-white" onchange="loadOSDFSegments()">
               <option>-- Select Detector First --</option>
             </select>
           </div>
+
           <div>
-            <label class="label text-gw-teal">Time Segments</label>
-            <select multiple id="osdf-segments" class="select select-bordered w-full h-48 bg-gw-dark">
+            <label class="label text-gw-teal text-lg font-semibold">Available Segments</label>
+            <select multiple id="osdf-segments" class="select select-bordered w-full h-64 bg-gw-dark/80 text-white text-sm">
+              <option disabled>Select frame type to load segments</option>
             </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <input type="text" id="osdf-start" placeholder="Custom GPS Start" class="input input-bordered bg-gw-dark">
-          <input type="text" id="osdf-end" placeholder="Custom GPS End" class="input input-bordered bg-gw-dark">
+        <div class="grid grid-cols-2 gap-6 mb-10 max-w-2xl mx-auto">
+          <input type="text" id="osdf-start" placeholder="Custom GPS Start (optional)" class="input input-bordered bg-gw-dark/80 text-white placeholder-gray-400">
+          <input type="text" id="osdf-end" placeholder="Custom GPS End (optional)" class="input input-bordered bg-gw-dark/80 text-white placeholder-gray-400">
         </div>
 
-      <div class="flex flex-wrap gap-4 justify-center mt-8">
-        <button class="btn btn-wide bg-gw-teal hover:bg-gw-yellow text-black font-bold shadow-lg" onclick="refreshOSDF()">
-          <span class="loading loading-spinner loading-sm hidden" id="refresh-spinner"></span>
-          Refresh Lists
-        </button>
-        <button id="download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg" onclick="startOSDFDownload()">
-          <span class="loading loading-spinner loading-md hidden" id="download-spinner"></span>
-          Start Download
-        </button>
-        <button class="btn btn-wide bg-gw-orange hover:bg-red-600 text-white font-bold shadow-lg" onclick="stopExecution()">
-          Stop Execution
-        </button>
-      </div>
-        
-      </div>
-
-      <!-- NDS Tab -->
-      <div id="nds-tab" class="card bg-gw-card p-8 hidden">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div>
-            <label class="label text-gw-teal">Detectors</label>
-            <select id="nds-detector" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSGroups()">
-              <option value="">-- Select --</option>
-              <option value="H1">LIGO-Hanford (H1)</option>
-              <option value="L1">LIGO-Livingston (L1)</option>
-              <option value="V1">Virgo (V1)</option>
-              <option value="K1">KAGRA (K1)</option>
-            </select>
-          </div>
-          <div>
-            <label class="label text-gw-teal">Groups</label>
-            <select id="nds-group" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSChannels()">
-              <option>-- Select Detector First --</option>
-            </select>
-          </div>
-          <div>
-            <label class="label text-gw-teal">Channels</label>
-            <select id="nds-channel" class="select select-bordered w-full bg-gw-dark">
-              <option>-- Select Group First --</option>
-            </select>
-          </div>
-          <div>
-            <label class="label text-gw-teal">Time Segments</label>
-            <select multiple id="nds-segments" class="select select-bordered w-full h-48 bg-gw-dark">
-            </select>
-          </div>
-        </div>
-      
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <input type="text" id="nds-start" placeholder="Custom GPS Start" class="input input-bordered bg-gw-dark">
-          <input type="text" id="nds-end" placeholder="Custom GPS End" class="input input-bordered bg-gw-dark">
-        </div>
-      
-        <div class="flex flex-wrap gap-4 justify-center mt-8">
-          <button class="btn btn-wide bg-gw-teal hover:bg-gw-yellow text-black font-bold shadow-lg" onclick="refreshNDS()">
+        <div class="flex flex-wrap gap-6 justify-center">
+          <button onclick="refreshOSDF()" class="btn btn-wide bg-gw-teal hover:bg-gw-teal/80 text-black font-bold shadow-xl">
+            <span class="loading loading-spinner loading-sm hidden" id="refresh-spinner"></span>
             Refresh Lists
           </button>
-          <button id="nds-download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg" onclick="startNDSDownload()">
-            <span class="loading loading-spinner loading-md hidden" id="nds-spinner"></span>
-            Start NDS Fetch
+          <button onclick="startOSDFDownload()" id="download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-black font-bold shadow-xl">
+            <span class="loading loading-spinner loading-md hidden" id="download-spinner"></span>
+            Start OSDF Download
+          </button>
+          <button onclick="stopExecution()" class="btn btn-wide bg-red-600 hover:bg-red-700 text-white font-bold shadow-xl">
+            Stop Execution
           </button>
         </div>
       </div>
 
-      <!-- Bulk NDS Tab -->
-      <div id="bulk-tab" class="card bg-gw-card p-8 hidden">
-        <p class="text-center py-20 text-xl">Bulk Fetch (CSV upload) coming next</p>
+      <!-- NDS TAB -->
+      <div id="nds-tab" class="card bg-gw-card/80 backdrop-blur p-8 rounded-2xl shadow-2xl border border-gw-orange/20 hidden">
+        <h2 class="text-3xl font-bold mb-8 text-gw-orange text-center">NDS – Single Channel Fetch</h2>
+
+        <div class="alert alert-warning shadow-lg mb-10 max-w-4xl mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-8 w-8" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="font-bold">NDS is not available yet on this hosting plan</h3>
+            <div class="text-sm">It requires special system libraries (nds2-client). Coming soon on upgraded hosting!</div>
+          </div>
+        </div>
+
+        <!-- Placeholder UI (can be enabled later) -->
+        <div class="opacity-50 pointer-events-none">
+          <!-- Your NDS dropdowns here -->
+        </div>
+      </div>
+
+      <!-- BULK NDS TAB -->
+      <div id="bulk-tab" class="card bg-gw-card/80 backdrop-blur p-8 rounded-2xl shadow-2xl border border-gw-teal/20 hidden">
+        <h2 class="text-3xl font-bold mb-8 text-gw-teal text-center">Bulk NDS – CSV Import</h2>
+        <div class="text-center py-20">
+          <p class="text-2xl text-gray-400 mb-6">Feature coming soon!</p>
+          <p class="text-lg text-gray-500">Upload channel list and time segments via CSV for batch fetching.</p>
+        </div>
       </div>
     </div>
 
-    <!-- LIGO Assoc SECTION -->
+    <!-- LIGO ASSOC SECTION -->
     <div id="assoc-section" class="hidden">
-      <div class="card bg-gw-card p-8">
-        <p class="text-center py-20 text-xl">LIGO Assoc tab (CSV + server selection) coming next</p>
+      <div class="card bg-gw-card/80 backdrop-blur p-10 rounded-2xl shadow-2xl border border-red-600/30">
+        <h2 class="text-4xl font-bold mb-10 text-red-500 text-center">LIGO Assoc – Restricted Data Access</h2>
+        <div class="alert alert-error shadow-lg max-w-3xl mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-8 w-8" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div>
+            <h3 class="font-bold text-lg">Restricted Access</h3>
+            <div>This feature requires LIGO.ORG authentication and access to internal data servers.</div>
+            <div class="mt-2">Available only in the desktop version of GWeasy with proper credentials.</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Live Terminal Output -->
-    <div class="mt-12 card bg-black p-6 rounded-xl">
-      <h2 class="text-3xl mb-4 text-gw-teal">Live Terminal</h2>
-      <pre id="terminal" class="text-cyan-400 font-mono h-96 overflow-y-auto p-4 bg-gray-900 rounded"></pre>
+    <!-- LIVE TERMINAL -->
+    <div class="mt-16 card bg-black/90 p-8 rounded-2xl shadow-2xl border border-gw-teal/30">
+      <h2 class="text-3xl font-bold mb-6 text-gw-teal text-center">Live Terminal Output</h2>
+      <pre id="terminal" class="text-cyan-300 font-mono text-sm h-96 overflow-y-auto p-6 bg-gray-900/90 rounded-xl border border-gray-700"></pre>
     </div>
   </div>
 </div>
 
 <script>
+// Main tab switching
+function switchMainTab(tab) {
+  document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
+  document.getElementById('assoc-section').classList.toggle('hidden', tab !== 'assoc');
+
+  document.getElementById('tab-public').classList.toggle('tab-active', tab === 'public');
+  document.getElementById('tab-assoc').classList.toggle('tab-active', tab === 'assoc');
+}
+
+// Sub-tab switching
+function switchSubTab(sub) {
+  document.getElementById('osdf-tab').classList.toggle('hidden', sub !== 'osdf');
+  document.getElementById('nds-tab').classList.toggle('hidden', sub !== 'nds');
+  document.getElementById('bulk-tab').classList.toggle('hidden', sub !== 'bulk');
+
+  document.getElementById('subtab-osdf').classList.toggle('tab-active', sub === 'osdf');
+  document.getElementById('subtab-nds').classList.toggle('tab-active', sub === 'nds');
+  document.getElementById('subtab-bulk').classList.toggle('tab-active', sub === 'bulk');
+}
+
+
 function showTab(tab) {
   document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
   document.getElementById('assoc-section').classList.toggle('hidden', tab !== 'assoc');
