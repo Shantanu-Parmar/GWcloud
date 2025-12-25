@@ -45,6 +45,7 @@ def log(msg: str, level: str = "info") -> str:
     return f"{prefix} {msg}"
 
 # === OSDF DOWNLOAD (with custom session to bypass SSL hostname mismatch) ===
+# === OSDF DOWNLOAD (public data – force plain session) ===
 def download_osdf(detector_code: str, frametype: str, segments: list[str], output_dir: str = DEFAULT_GWFOUT):
     os.makedirs(output_dir, exist_ok=True)
     channel = f"{detector_code}:{frametype}"
@@ -54,9 +55,9 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
     host = "https://datafind.gw-openscience.org"
     downloaded = 0
 
-    # Create custom session with SSL verification disabled
-    session = Session()
-    session.verify = False
+    # Force plain requests.Session (no igwn_auth_utils)
+    session = requests.Session()
+    session.verify = False  # Bypass SSL hostname mismatch
 
     for seg in segments:
         try:
@@ -69,7 +70,6 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
         os.makedirs(segment_dir, exist_ok=True)
 
         try:
-            # Use custom session to bypass SSL hostname issue
             urls = find_urls(
                 detector_code, frametype, start, end,
                 urltype='osdf', host=host, session=session
@@ -94,14 +94,13 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
 
             try:
                 yield log(f"Downloading {filename} ...", "info")
-                # Use requests_pelican with verify=False as fallback
-                r = rp_get(url, timeout=180, verify=False)
+                r = rp.get(url, timeout=180, verify=False)
                 r.raise_for_status()
 
                 with open(filepath, "wb") as f:
                     f.write(r.content)
 
-                # Parse timestamp and duration from filename
+                # Parse timestamp/duration from filename
                 parts = filename.split("-")
                 timestamp = int(parts[-2])
                 duration = int(parts[-1].replace(".gwf", ""))
@@ -112,12 +111,12 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
 
                 downloaded += 1
                 yield log(f"Saved {filename}", "success")
-                time.sleep(1.0)  # Be gentle on server
+                time.sleep(1.0)
             except Exception as e:
                 yield log(f"Download failed {filename}: {e}", "error")
 
     yield log(f"OSDF complete – {downloaded} file(s) downloaded", "success")
-
+    
 # === NDS / Public Download (no SSL issue – uses gwpy.fetch) ===
 def download_nds(channel: str, segments: list[str], output_dir: str = DEFAULT_GWFOUT):
     os.makedirs(output_dir, exist_ok=True)
