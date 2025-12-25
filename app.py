@@ -201,3 +201,57 @@ async def osdf_stream():
             await asyncio.sleep(0.5)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+    
+@app.get("/api/downloads")
+async def api_downloads():
+    base_dir = "./uploads/GWFout"
+    if not os.path.exists(base_dir):
+        return {"channels": []}
+    
+    channels = []
+    for ch_dir in sorted(os.listdir(base_dir)):
+        full_ch_dir = os.path.join(base_dir, ch_dir)
+        if not os.path.isdir(full_ch_dir):
+            continue
+        channel_name = ch_dir.replace("_", ":", 1)  # H_H1_... → H:H1...
+        
+        segments = []
+        for seg_dir in sorted(os.listdir(full_ch_dir)):
+            full_seg_dir = os.path.join(full_ch_dir, seg_dir)
+            if not os.path.isdir(full_seg_dir):
+                continue
+            
+            files = []
+            seg_path = os.path.join(full_ch_dir, seg_dir)
+            for f in sorted(os.listdir(seg_path)):
+                if f.endswith(".gwf"):
+                    file_path = f"uploads/GWFout/{ch_dir}/{seg_dir}/{f}"
+                    files.append({
+                        "name": f,
+                        "path": file_path,
+                        "size": os.path.getsize(os.path.join(seg_path, f))
+                    })
+            
+            # Add fin.ffl if exists
+            fin_path = os.path.join(full_ch_dir, "fin.ffl")
+            fin_info = None
+            if os.path.exists(fin_path):
+                fin_info = {
+                    "name": "fin.ffl",
+                    "path": f"uploads/GWFout/{ch_dir}/fin.ffl",
+                    "size": os.path.getsize(fin_path)
+                }
+            
+            segments.append({
+                "name": seg_dir,
+                "files": files,
+                "fin": fin_info
+            })
+        
+        channels.append({
+            "name": channel_name,
+            "path": ch_dir,
+            "segments": segments
+        })
+    
+    return {"channels": channels}
