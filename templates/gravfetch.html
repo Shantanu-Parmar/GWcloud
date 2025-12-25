@@ -163,7 +163,7 @@ async function loadFrameTypes() {
     select.appendChild(opt);
   });
 }
-
+// OSDF
 async function loadOSDFSegments() {
   const det = document.getElementById('osdf-detector').value;
   const ft = document.getElementById('osdf-frametype').value;
@@ -227,7 +227,6 @@ async function startOSDFDownload() {
   };
 }
 
-
 // Optional: show spinner on click
 document.getElementById('download-btn').addEventListener('click', () => {
   document.getElementById('download-spinner').classList.remove('hidden');
@@ -238,5 +237,63 @@ function refreshOSDF() {
   // call your refresh endpoints
 }
 // Add other functions: refresh, stop, output dir, etc.
+
+
+// NDS
+  async function loadNDSGroups() {
+  const det = document.getElementById('nds-detector').value;
+  if (!det) return;
+  const res = await fetch(`/api/nds/groups?detector=${det}`);
+  const groups = await res.json();
+  const select = document.getElementById('nds-group');
+  select.innerHTML = '<option>-- Select Group --</option>';
+  groups.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g;
+    opt.textContent = g;
+    select.appendChild(opt);
+  });
+}
+
+async function loadNDSChannels() {
+  const det = document.getElementById('nds-detector').value;
+  const group = document.getElementById('nds-group').value;
+  if (!det || !group) return;
+  const res = await fetch(`/api/nds/channels?detector=${det}&group=${group}`);
+  const channels = await res.json();
+  const select = document.getElementById('nds-channel');
+  select.innerHTML = '<option>-- Select Channel --</option>';
+  channels.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.split(" (")[0];
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
+}
+
+async function startNDSDownload() {
+  const channel = document.getElementById('nds-channel').value;
+  const segSelect = document.getElementById('nds-segments');
+  const selectedSegs = Array.from(segSelect.selectedOptions).map(o => o.value);
+  const start = document.getElementById('nds-start').value.trim();
+  const end = document.getElementById('nds-end').value.trim();
+  if (start && end) selectedSegs.push(`${start}_${end}`);
+
+  if (!channel || selectedSegs.length === 0) {
+    alert("Please select a channel and at least one segment");
+    return;
+  }
+
+  const term = document.getElementById('terminal');
+  term.innerHTML = '<div class="text-gw-yellow">Starting NDS fetch...</div>';
+
+  await fetch('/api/gravfetch/nds', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `channel=${encodeURIComponent(channel)}&segments=${encodeURIComponent(selectedSegs.join(','))}`
+  });
+
+  const es = new EventSource('/api/gravfetch/osdf/stream'); // reuse or add new stream for NDS
+}
 </script>
 {% endblock %}
