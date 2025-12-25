@@ -70,9 +70,50 @@
 
       <!-- NDS Tab -->
       <div id="nds-tab" class="card bg-gw-card p-8 hidden">
-        <!-- Similar structure: Detector → Group → Channel → Segments -->
-        <!-- We'll add this next if you confirm OSDF looks good -->
-        <p class="text-center py-20 text-xl">NDS tab coming next — same layout as PyQt5</p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div>
+            <label class="label text-gw-teal">Detectors</label>
+            <select id="nds-detector" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSGroups()">
+              <option value="">-- Select --</option>
+              <option value="H1">LIGO-Hanford (H1)</option>
+              <option value="L1">LIGO-Livingston (L1)</option>
+              <option value="V1">Virgo (V1)</option>
+              <option value="K1">KAGRA (K1)</option>
+            </select>
+          </div>
+          <div>
+            <label class="label text-gw-teal">Groups</label>
+            <select id="nds-group" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSChannels()">
+              <option>-- Select Detector First --</option>
+            </select>
+          </div>
+          <div>
+            <label class="label text-gw-teal">Channels</label>
+            <select id="nds-channel" class="select select-bordered w-full bg-gw-dark">
+              <option>-- Select Group First --</option>
+            </select>
+          </div>
+          <div>
+            <label class="label text-gw-teal">Time Segments</label>
+            <select multiple id="nds-segments" class="select select-bordered w-full h-48 bg-gw-dark">
+            </select>
+          </div>
+        </div>
+      
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <input type="text" id="nds-start" placeholder="Custom GPS Start" class="input input-bordered bg-gw-dark">
+          <input type="text" id="nds-end" placeholder="Custom GPS End" class="input input-bordered bg-gw-dark">
+        </div>
+      
+        <div class="flex flex-wrap gap-4 justify-center mt-8">
+          <button class="btn btn-wide bg-gw-teal hover:bg-gw-yellow text-black font-bold shadow-lg" onclick="refreshNDS()">
+            Refresh Lists
+          </button>
+          <button id="nds-download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg" onclick="startNDSDownload()">
+            <span class="loading loading-spinner loading-md hidden" id="nds-spinner"></span>
+            Start NDS Fetch
+          </button>
+        </div>
       </div>
 
       <!-- Bulk NDS Tab -->
