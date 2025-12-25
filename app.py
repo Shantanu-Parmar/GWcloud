@@ -255,3 +255,7 @@ async def api_downloads():
         })
     
     return {"channels": channels}
+
+@app.get("/downloads", response_class=HTMLResponse)
+async def downloads_page(request: Request):
+    return templates.TemplateResponse("downloads.html", {"request": request})
