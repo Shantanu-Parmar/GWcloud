@@ -193,7 +193,11 @@ async function startOSDFDownload() {
     term.scrollTop = term.scrollHeight;
   };
 }
-
+  
+function refreshOSDF() {
+  document.getElementById('refresh-spinner').classList.remove('hidden');
+  // call your refresh endpoints
+}
 // Add other functions: refresh, stop, output dir, etc.
 </script>
 {% endblock %}
