@@ -139,7 +139,7 @@ async function loadOSDFSegments() {
   });
 }
 
-
+  
 async function startOSDFDownload() {
   const det = document.getElementById('osdf-detector').value;
   const ft = document.getElementById('osdf-frametype').value;
@@ -154,45 +154,39 @@ async function startOSDFDownload() {
     return;
   }
 
-  // Show loading
-  document.getElementById('terminal').innerHTML = '<div class="text-gw-yellow">Starting download... <span class="loading loading-spinner loading-md"></span></div>';
+  const term = document.getElementById('terminal');
+  term.innerHTML = '<div class="text-gw-yellow">Starting OSDF download...</div>';
 
-  // POST request to trigger background download + SSE streaming
-  fetch('/api/gravfetch/osdf', {
+  // Trigger download
+  await fetch('/api/gravfetch/osdf', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      detector: det,
-      frametype: ft,
-      segments: selectedSegs
-    })
+    body: JSON.stringify({ detector: det, frametype: ft, segments: selectedSegs })
   });
 
-  // Connect to live log stream
+  // Connect to live stream
   const es = new EventSource('/api/gravfetch/osdf/stream');
-  es.onmessage = e => {
+  es.onmessage = function(e) {
     const line = document.createElement('div');
-    if (e.data.includes('SUCCESS')) line.className = 'text-green-400';
-    else if (e.data.includes('ERROR')) line.className = 'text-red-500';
-    else if (e.data.includes('Downloading')) line.className = 'text-gw-yellow';
-    else line.className = 'text-white';
-    line.textContent = e.data;
-    document.getElementById('terminal').appendChild(line);
-    document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
-  };
-}
+    const text = e.data;
 
-  
-  const es = new EventSource(`/api/gravfetch/osdf?detector=${det}&frametype=${ft}&segments=${selectedSegs.join(',')}`);
-  const term = document.getElementById('terminal');
-  term.textContent = '';
-  es.onmessage = e => {
-    const line = document.createElement('div');
-    line.textContent = e.data;
+    if (text.includes('[SUCCESS]')) line.className = 'text-green-400';
+    else if (text.includes('[ERROR]')) line.className = 'text-red-500';
+    else if (text.includes('Downloading') || text.includes('Finding')) line.className = 'text-gw-yellow';
+    else line.className = 'text-white';
+
+    line.textContent = text;
     term.appendChild(line);
     term.scrollTop = term.scrollHeight;
   };
+
+  es.onerror = function() {
+    term.innerHTML += '<div class="text-red-500">Stream ended or error occurred.</div>';
+    es.close();
+  };
 }
+
+
   
 function refreshOSDF() {
   document.getElementById('refresh-spinner').classList.remove('hidden');
