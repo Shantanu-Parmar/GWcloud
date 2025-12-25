@@ -4,10 +4,11 @@ import time
 import pandas as pd
 import logging
 import requests
-from requests import Session
+
 from requests_pelican import get as rp_get
 from gwdatafind import find_urls
 import os
+from gwdatafind import Session
 os.environ['GWDATAFIND_PUBLIC'] = '1'
 
 logging.basicConfig(level=logging.INFO)
@@ -51,8 +52,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
     downloaded = 0
 
     # Plain session with SSL verification disabled
-    session = requests.Session()
-    session.verify = False
+    session = Session(verify=False)
 
     for seg in segments:
         try:
@@ -68,7 +68,7 @@ def download_osdf(detector_code: str, frametype: str, segments: list[str], outpu
             yield log(f"Finding URLs for {channel} {start}-{end}...", "info")
             urls = find_urls(
                 detector_code, frametype, start, end,
-                urltype='osdf', host=host, session=session
+                urltype='osdf', host=host, session=session, token_audience=None  # Explicitly None for public
             )
         except Exception as e:
             yield log(f"find_urls error {seg}: {str(e)}", "error")
