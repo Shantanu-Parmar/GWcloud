@@ -180,7 +180,7 @@ def run_osdf_background(detector, frametype, segments):
     global current_job_log
     for line in download_osdf(detector, frametype, segments):
         current_job_log.append(line)
-
+        
 @app.get("/api/gravfetch/osdf/stream")
 async def osdf_stream():
     async def event_generator():
@@ -189,8 +189,8 @@ async def osdf_stream():
         while True:
             if seen < len(current_job_log):
                 for i in range(seen, len(current_job_log)):
-                    yield current_job_log[i]
+                    yield f"data: {current_job_log[i]}\n\n"
                 seen = len(current_job_log)
-            await asyncio.sleep(1)  # Check every second for new logs
+            await asyncio.sleep(0.5)  # Check frequently
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
