@@ -161,6 +161,7 @@ async def api_nds_channels(detector: str, group: str):
     except Exception as e:
         return ["Error fetching channels"]
 
+import asyncio
 from fastapi import BackgroundTasks
 
 current_job_log = []
@@ -168,10 +169,12 @@ current_job_log = []
 @app.post("/api/gravfetch/osdf")
 async def trigger_osdf_download(data: dict, background_tasks: BackgroundTasks):
     global current_job_log
-    current_job_log = []
+    current_job_log = []  # Clear previous logs
     segments = data["segments"]
-    background_tasks.add_task(run_osdf_background, data["detector"], data["frametype"], segments)
-    return {"status": "started"}
+    detector = data["detector"]
+    frametype = data["frametype"]
+    background_tasks.add_task(run_osdf_background, detector, frametype, segments)
+    return {"status": "Download started", "message": "Check live terminal for progress"}
 
 def run_osdf_background(detector, frametype, segments):
     global current_job_log
@@ -180,15 +183,14 @@ def run_osdf_background(detector, frametype, segments):
 
 @app.get("/api/gravfetch/osdf/stream")
 async def osdf_stream():
-    def event_generator():
+    async def event_generator():
         global current_job_log
-        yielded = 0
+        seen = 0
         while True:
-            if yielded < len(current_job_log):
-                yield current_job_log[yielded]
-                yielded += 1
-            elif len(current_job_log) > yielded:
-                yield current_job_log[yielded]
-                yielded += 1
-            await asyncio.sleep(0.5)
+            if seen < len(current_job_log):
+                for i in range(seen, len(current_job_log)):
+                    yield current_job_log[i]
+                seen = len(current_job_log)
+            await asyncio.sleep(1)  # Check every second for new logs
+
     return StreamingResponse(event_generator(), media_type="text/event-stream")
