@@ -11,3 +11,4 @@ lalsuite
 requests-pelican
 pandas
 requests
+igwn-auth-utils
