@@ -8,7 +8,7 @@ from requests import Session
 from requests_pelican import get as rp_get  # Use alias to avoid conflict
 from gwpy.timeseries import TimeSeries
 from gwdatafind import find_urls
-
+from requests import Session
 # Disable warnings globally (safe for public GWOSC)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
