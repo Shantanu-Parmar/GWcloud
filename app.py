@@ -18,12 +18,12 @@ from core.omicron import run_omicron, generate_fin_ffl
 
 app = FastAPI(title="GWcloud - GWeasy Web")
 
-# Mount static folder
-import os
-from fastapi.staticfiles import StaticFiles
-# Create static dir if not exists (safe on Azure/Render)
-os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# # Mount static folder
+# import os
+# from fastapi.staticfiles import StaticFiles
+# # Create static dir if not exists (safe on Azure/Render)
+# os.makedirs("static", exist_ok=True)
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # Templates
