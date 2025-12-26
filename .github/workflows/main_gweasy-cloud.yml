@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - GWeasy-cloud
+name: Build and deploy Python app to Azure Web App - Gweasy-cloud
 
 on:
   push:
@@ -63,14 +63,14 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7E489D02B881459BA0103955D314F56E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F7E6317306534E3DB7054D5F5DDA3C89 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9A9E1DB8C5B446F8AC37FE6C47832B58 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_5E8CCADDD7974281AC0930EABF9735B4 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E32B9FDFF00A40DDB29CCF1735541B85 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1B40D2608A204F73A706CF1CC8CE13B4 }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'GWeasy-cloud'
+          app-name: 'Gweasy-cloud'
           slot-name: 'Production'
           
