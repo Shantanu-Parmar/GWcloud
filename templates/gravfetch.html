@@ -175,6 +175,7 @@
 </div>
 
 <script>
+let zipTriggered = false;  // Prevents multiple ZIP downloads
 // Tab switching
 function switchMainTab(tab) {
   document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
@@ -247,6 +248,8 @@ async function startOSDFDownload() {
     body: JSON.stringify({ detector: det, frametype: ft, segments: selectedSegs })
   });
 
+  zipTriggered = false;  // Reset for new job
+
   const es = new EventSource('/api/gravfetch/osdf/stream');
   es.onmessage = function(e) {
     const text = e.data;
@@ -265,12 +268,11 @@ async function startOSDFDownload() {
     term.appendChild(line);
     term.scrollTop = term.scrollHeight;
 
-    // Auto-trigger ZIP download when complete
-    if (text.includes('OSDF complete')) {
-      const channelKey = `${det}_${ft.replace(':', '_')}`;
-      const zipUrl = `/download_zip/${channelKey}`;
+    // Detect ZIP ready and trigger download only once
+    if (text.includes('[ZIP_READY]') && !zipTriggered) {
+      const ch_dir_name = text.split('[ZIP_READY]')[1];
+      const zipUrl = `/download_zip/${ch_dir_name}`;
 
-      // Trigger download
       const link = document.createElement('a');
       link.href = zipUrl;
       link.download = `${det}:${ft}_data.zip`;
@@ -278,19 +280,26 @@ async function startOSDFDownload() {
       link.click();
       document.body.removeChild(link);
 
-      // Show success message
+      zipTriggered = true;
+
       const successBox = document.createElement('div');
-      successBox.className = 'mt-8 p-8 bg-green-900/60 rounded-2xl border-4 border-green-500 text-center';
+      successBox.className = 'mt-12 p-10 bg-green-900/70 rounded-3xl border-4 border-green-500 text-center shadow-2xl';
       successBox.innerHTML = `
-        <p class="text-3xl font-bold text-green-400 mb-4">Download Complete!</p>
-        <p class="text-xl text-green-200">Your gravitational wave data ZIP is downloading...</p>
-        <p class="text-lg text-green-300 mt-4">Unzip to get all .gwf files and fin.ffl</p>
+        <p class="text-4xl font-bold text-green-400 mb-6">Download Complete!</p>
+        <p class="text-2xl text-green-200 mb-4">Your gravitational wave data is downloading as a ZIP file</p>
+        <p class="text-xl text-green-300">Unzip it to access all .gwf files and fin.ffl</p>
       `;
       term.appendChild(successBox);
       term.scrollTop = term.scrollHeight;
     }
   };
 
+  es.onerror = function() {
+    term.innerHTML += '<div class="text-red-500 font-bold mt-6">Stream ended unexpectedly.</div>';
+    es.close();
+  };
+}
+  
   es.onerror = function() {
     term.innerHTML += '<div class="text-red-500 font-bold">Stream ended.</div>';
     es.close();
