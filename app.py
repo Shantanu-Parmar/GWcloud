@@ -192,6 +192,34 @@ def run_osdf_background(detector: str, frametype: str, segments: list[str]):
         current_job_log.append("[SUCCESS] OSDF download completed successfully!")
     except Exception as e:
         current_job_log.append(f"[ERROR] Download failed: {str(e)}")
+        
+def run_osdf_background(detector: str, frametype: str, segments: list[str]):
+    global current_job_log
+    try:
+        for log_line in download_osdf(detector, frametype, segments):
+            current_job_log.append(log_line)
+
+        # After success, create ZIP
+        channel = f"{detector}:{frametype}"
+        ch_dir_name = channel.replace(":", "_")
+        channel_path = os.path.join("./uploads/GWFout", ch_dir_name)
+        zip_path = f"/tmp/{ch_dir_name}.zip"
+
+        if os.path.exists(channel_path):
+            import zipfile
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(channel_path):
+                    for file in files:
+                        full_path = os.path.join(root, file)
+                        arcname = os.path.relpath(full_path, "./uploads/GWFout")
+                        zipf.write(full_path, arcname)
+            current_job_log.append(f"[SUCCESS] ZIP ready: /download_zip/{ch_dir_name}")
+        else:
+            current_job_log.append("[ERROR] No files to zip")
+
+    except Exception as e:
+        current_job_log.append(f"[ERROR] {str(e)}")
+        
 
 @app.get("/api/gravfetch/osdf/stream")
 async def osdf_stream():
@@ -291,3 +319,11 @@ async def debug_files():
                 rel = os.path.relpath(os.path.join(root, f))
                 files.append(rel)
     return {"files": files or "No files (cleared or not downloaded yet)"}
+
+
+@app.get("/download_zip/{ch_dir_name}")
+async def download_zip(ch_dir_name: str):
+    zip_path = f"/tmp/{ch_dir_name}.zip"
+    if os.path.exists(zip_path):
+        return FileResponse(zip_path, media_type="application/zip", filename=f"{ch_dir_name}_data.zip")
+    return {"error": "ZIP not ready"}
