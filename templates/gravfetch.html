@@ -299,12 +299,6 @@ async function startOSDFDownload() {
     es.close();
   };
 }
-  
-  es.onerror = function() {
-    term.innerHTML += '<div class="text-red-500 font-bold">Stream ended.</div>';
-    es.close();
-  };
-}
 
 function refreshOSDF() {
   loadFrameTypes();
