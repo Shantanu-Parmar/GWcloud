@@ -186,14 +186,14 @@ async def trigger_osdf_download(request: OSDFRequest, background_tasks: Backgrou
 
     return {"status": "started", "message": "Download started – see live terminal"}
 
-def run_osdf_background(detector: str, frametype: str, segments: list[str]):
-    global current_job_log
-    try:
-        for log_line in download_osdf(detector, frametype, segments):
-            current_job_log.append(log_line)
-        current_job_log.append("[SUCCESS] OSDF download completed successfully!")
-    except Exception as e:
-        current_job_log.append(f"[ERROR] Download failed: {str(e)}")
+# def run_osdf_background(detector: str, frametype: str, segments: list[str]):
+#     global current_job_log
+#     try:
+#         for log_line in download_osdf(detector, frametype, segments):
+#             current_job_log.append(log_line)
+#         current_job_log.append("[SUCCESS] OSDF download completed successfully!")
+#     except Exception as e:
+#         current_job_log.append(f"[ERROR] Download failed: {str(e)}")
         
 def run_osdf_background(detector: str, frametype: str, segments: list[str]):
     global current_job_log
