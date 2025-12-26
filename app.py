@@ -194,33 +194,43 @@ async def trigger_osdf_download(request: OSDFRequest, background_tasks: Backgrou
 #         current_job_log.append("[SUCCESS] OSDF download completed successfully!")
 #     except Exception as e:
 #         current_job_log.append(f"[ERROR] Download failed: {str(e)}")
-        
-def run_osdf_background(detector: str, frametype: str, segments: list[str]):
+        def run_osdf_background(detector: str, frametype: str, segments: list[str]):
     global current_job_log
     try:
+        # Step 1: Download the actual .gwf files
         for log_line in download_osdf(detector, frametype, segments):
             current_job_log.append(log_line)
 
-        # After success, create ZIP
+        # Step 2: Prepare ZIP after download is complete
         channel = f"{detector}:{frametype}"
         ch_dir_name = channel.replace(":", "_")
         channel_path = os.path.join("./uploads/GWFout", ch_dir_name)
         zip_path = f"/tmp/{ch_dir_name}.zip"
 
         if os.path.exists(channel_path):
-            import zipfile
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(channel_path):
-                    for file in files:
-                        full_path = os.path.join(root, file)
-                        arcname = os.path.relpath(full_path, "./uploads/GWFout")
-                        zipf.write(full_path, arcname)
-            current_job_log.append(f"[SUCCESS] ZIP ready: /download_zip/{ch_dir_name}")
-        else:
-            current_job_log.append("[ERROR] No files to zip")
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for root, _, files in os.walk(channel_path):
+                        for file in files:
+                            full_path = os.path.join(root, file)
+                            # Use clean relative path inside ZIP (no leading uploads/GWFout)
+                            arcname = os.path.relpath(full_path, channel_path)
+                            zipf.write(full_path, arcname)
 
+                # Verify ZIP was created and has size > 0
+                if os.path.getsize(zip_path) > 100:  # >100 bytes to avoid empty/corrupt
+                    current_job_log.append(f"[ZIP_READY]{ch_dir_name}")
+                    current_job_log.append("[SUCCESS] Download complete! Your ZIP file is starting...")
+                else:
+                    current_job_log.append("[ERROR] ZIP created but empty or corrupted")
+            except Exception as zip_error:
+                current_job_log.append(f"[ERROR] Failed to create ZIP: {str(zip_error)}")
+        else:
+            current_job_log.append("[ERROR] No data folder found to zip")
+
+        current_job_log.append("[FINAL] OSDF job finished.")
     except Exception as e:
-        current_job_log.append(f"[ERROR] {str(e)}")
+        current_job_log.append(f"[ERROR] Unexpected error in background task: {str(e)}")
         
 
 @app.get("/api/gravfetch/osdf/stream")
