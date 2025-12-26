@@ -1,6 +1,8 @@
+# app.py
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
 import glob
@@ -14,8 +16,17 @@ from requests import Session
 from core.gravfetch import download_osdf, download_nds
 from core.omicron import run_omicron, generate_fin_ffl
 import zipfile
+from fastapi.responses import FileResponse
 
 app = FastAPI(title="GWcloud - GWeasy Web")
+
+# # Mount static folder
+# import os
+# from fastapi.staticfiles import StaticFiles
+# # Create static dir if not exists (safe on Azure/Render)
+# os.makedirs("static", exist_ok=True)
+# app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 # Templates
 templates = Jinja2Templates(directory="templates")
@@ -156,7 +167,8 @@ async def api_nds_channels(detector: str, group: str):
     except Exception as e:
         return ["Error fetching channels"]
 
-# === OSDF DOWNLOAD SYSTEM ===
+# === NEW OSDF DOWNLOAD SYSTEM (Pydantic + Background + Live Streaming) ===
+
 class OSDFRequest(BaseModel):
     detector: str
     frametype: str
@@ -166,40 +178,52 @@ class OSDFRequest(BaseModel):
 async def trigger_osdf_download(request: OSDFRequest, background_tasks: BackgroundTasks):
     global current_job_log
     current_job_log = []  # Reset for new job
+
     current_job_log.append(f"[INFO] Starting OSDF download for {request.detector}:{request.frametype}")
     current_job_log.append(f"[INFO] Requested segments: {', '.join(request.segments)}")
+
     background_tasks.add_task(run_osdf_background, request.detector, request.frametype, request.segments)
+
     return {"status": "started", "message": "Download started – see live terminal"}
 
 def run_osdf_background(detector: str, frametype: str, segments: list[str]):
     global current_job_log
     try:
+        # Step 1: Download the actual .gwf files
         for log_line in download_osdf(detector, frametype, segments):
             current_job_log.append(log_line)
 
-        # Create ZIP
+        # Step 2: Prepare ZIP after download is complete
         channel = f"{detector}:{frametype}"
         ch_dir_name = channel.replace(":", "_")
         channel_path = os.path.join("./uploads/GWFout", ch_dir_name)
         zip_path = f"/tmp/{ch_dir_name}.zip"
 
         if os.path.exists(channel_path):
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, _, files in os.walk(channel_path):
-                    for file in files:
-                        full_path = os.path.join(root, file)
-                        arcname = os.path.relpath(full_path, channel_path)
-                        zipf.write(full_path, arcname)
+            try:
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for root, _, files in os.walk(channel_path):
+                        for file in files:
+                            full_path = os.path.join(root, file)
+                            # Use clean relative path inside ZIP (no leading uploads/GWFout)
+                            arcname = os.path.relpath(full_path, channel_path)
+                            zipf.write(full_path, arcname)
 
-            # Only send marker if ZIP has content
-            if os.path.getsize(zip_path) > 0:
-                current_job_log.append(f"[ZIP_READY]{ch_dir_name}")
-            else:
-                current_job_log.append("[ERROR] ZIP created but empty")
+                # Verify ZIP was created and has size > 0
+                if os.path.getsize(zip_path) > 100:  # >100 bytes to avoid empty/corrupt
+                    current_job_log.append(f"[ZIP_READY]{ch_dir_name}")
+                    current_job_log.append("[SUCCESS] Download complete! Your ZIP file is starting...")
+                else:
+                    current_job_log.append("[ERROR] ZIP created but empty or corrupted")
+            except Exception as zip_error:
+                current_job_log.append(f"[ERROR] Failed to create ZIP: {str(zip_error)}")
+        else:
+            current_job_log.append("[ERROR] No data folder found to zip")
 
-        current_job_log.append("[SUCCESS] OSDF job completed!")
+        current_job_log.append("[FINAL] OSDF job finished.")
     except Exception as e:
-        current_job_log.append(f"[ERROR] {str(e)}")
+        current_job_log.append(f"[ERROR] Unexpected error in background task: {str(e)}")
+        
 
 @app.get("/api/gravfetch/osdf/stream")
 async def osdf_stream():
@@ -212,17 +236,83 @@ async def osdf_stream():
                     yield f"data: {current_job_log[i]}\n\n"
                 last_seen = len(current_job_log)
             await asyncio.sleep(0.5)
+
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-# === ZIP Download Endpoint ===
-@app.get("/download_zip/{ch_dir_name}")
-async def download_zip(ch_dir_name: str):
-    zip_path = f"/tmp/{ch_dir_name}.zip"
-    if os.path.exists(zip_path) and os.path.getsize(zip_path) > 0:
-        return FileResponse(zip_path, media_type="application/zip", filename=f"{ch_dir_name.replace('_', ':')}_data.zip")
-    return {"error": "ZIP not ready or empty"}
+@app.get("/api/downloads")
+async def api_downloads():
+    base_dir = "./uploads/GWFout"
+    channels = []
 
-# === Debug ===
+    if not os.path.exists(base_dir):
+        return {"channels": channels}
+
+    try:
+        for ch_dir_name in sorted(os.listdir(base_dir)):
+            ch_full_path = os.path.join(base_dir, ch_dir_name)
+            if not os.path.isdir(ch_full_path):
+                continue
+
+            # Convert directory name back to channel name: replace only the first '_' with ':'
+            channel_name = ch_dir_name.replace("_", ":", 1)
+
+            segments = []
+            for seg_dir_name in sorted(os.listdir(ch_full_path)):
+                seg_full_path = os.path.join(ch_full_path, seg_dir_name)
+
+                # Skip fin.ffl and non-directories
+                if seg_dir_name == "fin.ffl":
+                    continue
+                if not os.path.isdir(seg_full_path):
+                    continue
+
+                gwf_files = []
+                for filename in sorted(os.listdir(seg_full_path)):
+                    if filename.endswith(".gwf"):
+                        file_full_path = os.path.join(seg_full_path, filename)
+                        rel_path = os.path.join("uploads/GWFout", ch_dir_name, seg_dir_name, filename).replace("\\", "/")
+                        size = os.path.getsize(file_full_path)
+                        gwf_files.append({
+                            "name": filename,
+                            "path": rel_path,
+                            "size": size
+                        })
+
+                # Add fin.ffl for this channel (at channel level)
+                fin_full_path = os.path.join(ch_full_path, "fin.ffl")
+                fin_info = None
+                if os.path.exists(fin_full_path):
+                    fin_rel_path = os.path.join("uploads/GWFout", ch_dir_name, "fin.ffl").replace("\\", "/")
+                    fin_info = {
+                        "name": "fin.ffl",
+                        "path": fin_rel_path,
+                        "size": os.path.getsize(fin_full_path)
+                    }
+
+                segments.append({
+                    "name": seg_dir_name,
+                    "duration": int(seg_dir_name.split("_")[1]) - int(seg_dir_name.split("_")[0]),
+                    "files": gwf_files,
+                    "fin": fin_info  # Will be same for all segments of channel
+                })
+
+            if segments:  # Only add channel if it has segments
+                channels.append({
+                    "name": channel_name,
+                    "dir": ch_dir_name,
+                    "segments": segments
+                })
+
+    except Exception as e:
+        print(f"Error scanning downloads: {e}")
+        return {"channels": channels, "error": str(e)}
+
+    return {"channels": channels}
+
+@app.get("/downloads", response_class=HTMLResponse)
+async def downloads_page(request: Request):
+    return templates.TemplateResponse("downloads.html", {"request": request})
+    
 @app.get("/debug/files")
 async def debug_files():
     files = []
@@ -232,4 +322,12 @@ async def debug_files():
             for f in fs:
                 rel = os.path.relpath(os.path.join(root, f))
                 files.append(rel)
-    return {"files": files or "No files yet"}
+    return {"files": files or "No files (cleared or not downloaded yet)"}
+
+
+@app.get("/download_zip/{ch_dir_name}")
+async def download_zip(ch_dir_name: str):
+    zip_path = f"/tmp/{ch_dir_name}.zip"
+    if os.path.exists(zip_path):
+        return FileResponse(zip_path, media_type="application/zip", filename=f"{ch_dir_name}_data.zip")
+    return {"error": "ZIP not ready"}
