@@ -15,6 +15,8 @@ import requests
 from requests import Session
 from core.gravfetch import download_osdf, download_nds
 from core.omicron import run_omicron, generate_fin_ffl
+import zipfile
+from fastapi.responses import FileResponse
 
 app = FastAPI(title="GWcloud - GWeasy Web")
 
