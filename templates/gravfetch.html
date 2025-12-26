@@ -92,9 +92,50 @@
           </div>
         </div>
 
-        <!-- Placeholder UI (can be enabled later) -->
+        <!-- NDS UI placeholder - hidden until ready -->
         <div class="opacity-50 pointer-events-none">
-          <!-- Your NDS dropdowns here -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div>
+              <label class="label text-gw-teal">Detectors</label>
+              <select id="nds-detector" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSGroups()">
+                <option value="">-- Select --</option>
+                <option value="H1">LIGO-Hanford (H1)</option>
+                <option value="L1">LIGO-Livingston (L1)</option>
+                <option value="V1">Virgo (V1)</option>
+                <option value="K1">KAGRA (K1)</option>
+              </select>
+            </div>
+            <div>
+              <label class="label text-gw-teal">Groups</label>
+              <select id="nds-group" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSChannels()">
+                <option>-- Select Detector First --</option>
+              </select>
+            </div>
+            <div>
+              <label class="label text-gw-teal">Channels</label>
+              <select id="nds-channel" class="select select-bordered w-full bg-gw-dark">
+                <option>-- Select Group First --</option>
+              </select>
+            </div>
+            <div>
+              <label class="label text-gw-teal">Time Segments</label>
+              <select multiple id="nds-segments" class="select select-bordered w-full h-48 bg-gw-dark">
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <input type="text" id="nds-start" placeholder="Custom GPS Start" class="input input-bordered bg-gw-dark">
+            <input type="text" id="nds-end" placeholder="Custom GPS End" class="input input-bordered bg-gw-dark">
+          </div>
+          <div class="flex flex-wrap gap-4 justify-center mt-8">
+            <button class="btn btn-wide bg-gw-teal hover:bg-gw-yellow text-black font-bold shadow-lg" onclick="refreshNDS()">
+              Refresh Lists
+            </button>
+            <button id="nds-download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg" onclick="startNDSDownload()">
+              <span class="loading loading-spinner loading-md hidden" id="nds-spinner"></span>
+              Start NDS Fetch
+            </button>
+          </div>
         </div>
       </div>
 
@@ -134,38 +175,24 @@
 </div>
 
 <script>
-// Main tab switching
+// Tab switching
 function switchMainTab(tab) {
   document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
   document.getElementById('assoc-section').classList.toggle('hidden', tab !== 'assoc');
-
   document.getElementById('tab-public').classList.toggle('tab-active', tab === 'public');
   document.getElementById('tab-assoc').classList.toggle('tab-active', tab === 'assoc');
 }
 
-// Sub-tab switching
 function switchSubTab(sub) {
   document.getElementById('osdf-tab').classList.toggle('hidden', sub !== 'osdf');
   document.getElementById('nds-tab').classList.toggle('hidden', sub !== 'nds');
   document.getElementById('bulk-tab').classList.toggle('hidden', sub !== 'bulk');
-
   document.getElementById('subtab-osdf').classList.toggle('tab-active', sub === 'osdf');
   document.getElementById('subtab-nds').classList.toggle('tab-active', sub === 'nds');
   document.getElementById('subtab-bulk').classList.toggle('tab-active', sub === 'bulk');
 }
 
-
-function showTab(tab) {
-  document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
-  document.getElementById('assoc-section').classList.toggle('hidden', tab !== 'assoc');
-}
-
-function showSubTab(sub) {
-  document.getElementById('osdf-tab').classList.toggle('hidden', sub !== 'osdf');
-  document.getElementById('nds-tab').classList.toggle('hidden', sub !== 'nds');
-  document.getElementById('bulk-tab').classList.toggle('hidden', sub !== 'bulk');
-}
-
+// === OSDF FUNCTIONS ===
 async function loadFrameTypes() {
   const det = document.getElementById('osdf-detector').value;
   if (!det) return;
@@ -180,7 +207,7 @@ async function loadFrameTypes() {
     select.appendChild(opt);
   });
 }
-// OSDF
+
 async function loadOSDFSegments() {
   const det = document.getElementById('osdf-detector').value;
   const ft = document.getElementById('osdf-frametype').value;
@@ -192,12 +219,11 @@ async function loadOSDFSegments() {
   segs.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s;
-    opt.textContent = s;
+    opt.textContent = `${s} (${(parseInt(s.split('_')[1]) - parseInt(s.split('_')[0]))}s)`;
     select.appendChild(opt);
   });
 }
 
-  
 async function startOSDFDownload() {
   const det = document.getElementById('osdf-detector').value;
   const ft = document.getElementById('osdf-frametype').value;
@@ -213,115 +239,81 @@ async function startOSDFDownload() {
   }
 
   const term = document.getElementById('terminal');
-  term.innerHTML = '<div class="text-gw-yellow">Starting OSDF download...</div>';
+  term.innerHTML = '<div class="text-gw-yellow font-bold text-xl mb-4">Starting OSDF download...</div>';
 
-  // Trigger download
   await fetch('/api/gravfetch/osdf', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ detector: det, frametype: ft, segments: selectedSegs })
   });
 
-  // Connect to live stream
   const es = new EventSource('/api/gravfetch/osdf/stream');
   es.onmessage = function(e) {
-    const line = document.createElement('div');
     const text = e.data;
+    const line = document.createElement('div');
 
-    if (text.includes('[SUCCESS]')) line.className = 'text-green-400';
-    else if (text.includes('[ERROR]')) line.className = 'text-red-500';
-    else if (text.includes('Downloading') || text.includes('Finding')) line.className = 'text-gw-yellow';
-    else line.className = 'text-white';
-
+    if (text.includes('[SUCCESS]') || text.includes('Saved')) {
+      line.className = 'text-green-400 font-bold';
+    } else if (text.includes('[ERROR]')) {
+      line.className = 'text-red-500 font-bold';
+    } else if (text.includes('Downloading') || text.includes('Finding')) {
+      line.className = 'text-gw-yellow';
+    } else {
+      line.className = 'text-gray-300';
+    }
     line.textContent = text;
     term.appendChild(line);
     term.scrollTop = term.scrollHeight;
+
+    // Auto-trigger ZIP download when complete
+    if (text.includes('OSDF complete')) {
+      const channelKey = `${det}_${ft.replace(':', '_')}`;
+      const zipUrl = `/download_zip/${channelKey}`;
+
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = zipUrl;
+      link.download = `${det}:${ft}_data.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Show success message
+      const successBox = document.createElement('div');
+      successBox.className = 'mt-8 p-8 bg-green-900/60 rounded-2xl border-4 border-green-500 text-center';
+      successBox.innerHTML = `
+        <p class="text-3xl font-bold text-green-400 mb-4">Download Complete!</p>
+        <p class="text-xl text-green-200">Your gravitational wave data ZIP is downloading...</p>
+        <p class="text-lg text-green-300 mt-4">Unzip to get all .gwf files and fin.ffl</p>
+      `;
+      term.appendChild(successBox);
+      term.scrollTop = term.scrollHeight;
+    }
   };
 
   es.onerror = function() {
-    term.innerHTML += '<div class="text-red-500">Stream ended or error occurred.</div>';
+    term.innerHTML += '<div class="text-red-500 font-bold">Stream ended.</div>';
     es.close();
   };
 }
 
-// Optional: show spinner on click
-document.getElementById('download-btn').addEventListener('click', () => {
-  document.getElementById('download-spinner').classList.remove('hidden');
-});
-  
 function refreshOSDF() {
-  document.getElementById('refresh-spinner').classList.remove('hidden');
-  // call your refresh endpoints
+  loadFrameTypes();
 }
-// Add other functions: refresh, stop, output dir, etc.
 
-
-// NDS
+// NDS placeholder functions (disabled until nds2-client available)
 async function loadNDSGroups() {
-  const det = document.getElementById('nds-detector').value;
-  if (!det) return;
-  const res = await fetch(`/api/nds/groups?detector=${det}`);
-  const groups = await res.json();
-  const select = document.getElementById('nds-group');
-  select.innerHTML = '<option>-- Select Group --</option>';
-  groups.forEach(g => {
-    const opt = document.createElement('option');
-    opt.value = g;
-    opt.textContent = g;
-    select.appendChild(opt);
-  });
+  alert("NDS not available on current hosting");
 }
-
-async function loadNDSChannels() {
-  const det = document.getElementById('nds-detector').value;
-  const group = document.getElementById('nds-group').value;
-  if (!det || !group) return;
-  const res = await fetch(`/api/nds/channels?detector=${det}&group=${group}`);
-  const channels = await res.json();
-  const select = document.getElementById('nds-channel');
-  select.innerHTML = '<option>-- Select Channel --</option>';
-  channels.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.split(" (")[0];
-    opt.textContent = c;
-    select.appendChild(opt);
-  });
-}
-
+async function loadNDSChannels() {}
 async function startNDSDownload() {
-  const channel = document.getElementById('nds-channel').value;
-  const start = document.getElementById('nds-start').value.trim();
-  const end = document.getElementById('nds-end').value.trim();
-
-  if (!channel || !start || !end) {
-    alert("Please select a channel and enter custom GPS start/end");
-    return;
-  }
-
-  const segments = [`${start}_${end}`];
-
-  const term = document.getElementById('terminal');
-  term.innerHTML = '<div class="text-gw-yellow">Starting NDS fetch...</div>';
-
-  await fetch('/api/gravfetch/nds', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ channel: channel, segments: segments })
-  });
-
-  // Reuse OSDF stream or create new one — for now reuse
-  const es = new EventSource('/api/gravfetch/osdf/stream');
-  es.onmessage = function(e) {
-    const line = document.createElement('div');
-    const text = e.data;
-    if (text.includes('[SUCCESS]')) line.className = 'text-green-400';
-    else if (text.includes('[ERROR]')) line.className = 'text-red-500';
-    else if (text.includes('Fetching')) line.className = 'text-gw-yellow';
-    else line.className = 'text-white';
-    line.textContent = text;
-    term.appendChild(line);
-    term.scrollTop = term.scrollHeight;
-  };
+  alert("NDS fetching requires upgraded hosting with nds2-client library");
 }
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+  switchMainTab('public');
+  switchSubTab('osdf');
+});
 </script>
 {% endblock %}
