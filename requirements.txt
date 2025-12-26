@@ -1,9 +1,9 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-gunicorn==23.0.0
-jinja2==3.1.4
-python-multipart==0.0.9
-httpx==0.27.0
+fastapi
+uvicorn[standard]
+gunicorn
+jinja2
+python-multipart
+httpx
 gwpy
 gwosc
 gwdatafind
@@ -12,3 +12,4 @@ requests-pelican
 pandas
 requests
 igwn-auth-utils
+
