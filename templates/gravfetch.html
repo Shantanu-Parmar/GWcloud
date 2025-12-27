@@ -8,24 +8,26 @@
       Gravfetch – Gravitational Wave Data Fetching
     </h1>
 
-      <!-- Main Tabs: Public vs LIGO Assoc -->
-      <div class="flex justify-center mb-12">
-        <div class="inline-flex rounded-2xl bg-gw-card/40 backdrop-blur-md p-2 shadow-2xl border border-gw-teal/30">
-          <a id="tab-public" 
-             class="px-10 py-5 text-2xl font-bold rounded-xl transition-all duration-300 
-                    bg-gw-teal text-black shadow-lg"
-             onclick="switchMainTab('public')">
-            Public Data (GWOSC)
-          </a>
-          <a id="tab-assoc" 
-             class="px-10 py-5 text-2xl font-bold rounded-xl transition-all duration-300 
-                    text-gw-orange hover:bg-gw-orange/20"
-             onclick="switchMainTab('assoc')">
-            LIGO Assoc (Restricted)
-          </a>
-        </div>
+    <!-- Main Tabs: Public vs LIGO Assoc -->
+    <div class="flex justify-center mb-12">
+      <div class="inline-flex rounded-2xl bg-gw-card/40 backdrop-blur-md p-2 shadow-2xl border border-gw-teal/30">
+        <a id="tab-public" 
+           class="px-10 py-5 text-2xl font-bold rounded-xl transition-all duration-300 
+                  bg-gw-teal text-black shadow-lg"
+           onclick="switchMainTab('public')">
+          Public Data (GWOSC)
+        </a>
+        <a id="tab-assoc" 
+           class="px-10 py-5 text-2xl font-bold rounded-xl transition-all duration-300 
+                  text-gw-orange hover:bg-gw-orange/20"
+           onclick="switchMainTab('assoc')">
+          LIGO Assoc (Restricted)
+        </a>
       </div>
+    </div>
 
+    <!-- PUBLIC SECTION -->
+    <div id="public-section">
       <!-- Sub-tabs: OSDF / NDS / Bulk -->
       <div class="flex justify-center mb-12">
         <div class="inline-flex rounded-2xl bg-gw-card/50 backdrop-blur-md p-2 shadow-2xl border border-gw-teal/20 gap-2">
@@ -46,45 +48,40 @@
 
       <!-- OSDF TAB -->
       <div id="osdf-tab" class="card bg-gw-card/80 backdrop-blur p-8 rounded-2xl shadow-2xl border border-gw-teal/20">
-        <!-- <h2 class="text-3xl font-bold mb-8 text-gw-teal text-center">OSDF – Bulk Frame Download</h2> -->
-        <h2 class="text-4xl font-bold mb-10 text-gw-teal text-center drop-shadow-lg"> OSDF – Bulk Frame Download  </h2>
-        
+        <h2 class="text-4xl font-bold mb-10 text-gw-teal text-center drop-shadow-lg">
+          OSDF – Bulk Frame Download
+        </h2>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Detector</label>
-            <select id="osdf-detector" 
-                  class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium 
-                         focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow 
-                         transition-all duration-200 hover:bg-gw-dark/95">
-            <option value="">-- Select Detector --</option>
-            <option value="H">LIGO Hanford (H)</option>
-            <option value="L">LIGO Livingston (L)</option>
-            <option value="V">Virgo (V)</option>
-            <option value="K">KAGRA (K)</option>
-          </select>
+            <select id="osdf-detector" class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow transition-all duration-200 hover:bg-gw-dark/95">
+              <option value="">-- Select Detector --</option>
+              <option value="H">LIGO Hanford (H)</option>
+              <option value="L">LIGO Livingston (L)</option>
+              <option value="V">Virgo (V)</option>
+              <option value="K">KAGRA (K)</option>
+            </select>
           </div>
 
           <div>
             <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Frame Type</label>
             <select id="osdf-frametype" class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow transition-all duration-200 hover:bg-gw-dark/95">
-              <option>-- Select Frame Type --</option>
+              <option>-- Select Detector First --</option>
             </select>
           </div>
 
           <div>
             <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Available Segments</label>
-            <select multiple id="osdf-segments" 
-                    class="select select-bordered select-lg w-full h-64 bg-gw-dark/90 text-white text-base font-medium 
-                           focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow 
-                           transition-all duration-200 hover:bg-gw-dark/95">
+            <select multiple id="osdf-segments" class="select select-bordered select-lg w-full h-64 bg-gw-dark/90 text-white text-sm font-medium focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow transition-all duration-200 hover:bg-gw-dark/95">
               <option disabled>Select frame type to load segments</option>
             </select>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-6 mb-10 max-w-2xl mx-auto">
-          <input type="text" id="osdf-start" placeholder="Custom GPS Start (optional)" class="input input-bordered bg-gw-dark/80 text-white placeholder-gray-400">
-          <input type="text" id="osdf-end" placeholder="Custom GPS End (optional)" class="input input-bordered bg-gw-dark/80 text-white placeholder-gray-400">
+          <input type="text" id="osdf-start" placeholder="Custom GPS Start (optional)" class="input input-bordered input-lg bg-gw-dark/80 text-white placeholder-gray-400 text-lg focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow">
+          <input type="text" id="osdf-end" placeholder="Custom GPS End (optional)" class="input input-bordered input-lg bg-gw-dark/80 text-white placeholder-gray-400 text-lg focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow">
         </div>
 
         <div class="flex flex-wrap gap-8 justify-center mt-12">
@@ -104,7 +101,9 @@
 
       <!-- NDS TAB -->
       <div id="nds-tab" class="card bg-gw-card/80 backdrop-blur p-8 rounded-2xl shadow-2xl border border-gw-orange/20 hidden">
-        <h2 class="text-3xl font-bold mb-8 text-gw-orange text-center">NDS – Single Channel Fetch</h2>
+        <h2 class="text-4xl font-bold mb-10 text-gw-orange text-center drop-shadow-lg">
+          NDS – Single Channel Fetch
+        </h2>
 
         <div class="alert alert-warning shadow-lg mb-10 max-w-4xl mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-8 w-8" fill="none" viewBox="0 0 24 24">
@@ -116,12 +115,11 @@
           </div>
         </div>
 
-        <!-- NDS UI placeholder - hidden until ready -->
         <div class="opacity-50 pointer-events-none">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div>
-              <label class="label text-gw-teal">Detectors</label>
-              <select id="nds-detector" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSGroups()">
+              <label class="block text-gw-orange text-xl font-bold mb-3 tracking-wide">Detectors</label>
+              <select id="nds-detector" class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium focus:outline-none focus:ring-4 focus:ring-gw-orange/50 focus:border-gw-orange transition-all duration-200 hover:bg-gw-dark/95">
                 <option value="">-- Select --</option>
                 <option value="H1">LIGO-Hanford (H1)</option>
                 <option value="L1">LIGO-Livingston (L1)</option>
@@ -130,33 +128,33 @@
               </select>
             </div>
             <div>
-              <label class="label text-gw-teal">Groups</label>
-              <select id="nds-group" class="select select-bordered w-full bg-gw-dark" onchange="loadNDSChannels()">
+              <label class="block text-gw-orange text-xl font-bold mb-3 tracking-wide">Groups</label>
+              <select id="nds-group" class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium focus:outline-none focus:ring-4 focus:ring-gw-orange/50 focus:border-gw-orange transition-all duration-200 hover:bg-gw-dark/95">
                 <option>-- Select Detector First --</option>
               </select>
             </div>
             <div>
-              <label class="label text-gw-teal">Channels</label>
-              <select id="nds-channel" class="select select-bordered w-full bg-gw-dark">
+              <label class="block text-gw-orange text-xl font-bold mb-3 tracking-wide">Channels</label>
+              <select id="nds-channel" class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium focus:outline-none focus:ring-4 focus:ring-gw-orange/50 focus:border-gw-orange transition-all duration-200 hover:bg-gw-dark/95">
                 <option>-- Select Group First --</option>
               </select>
             </div>
             <div>
-              <label class="label text-gw-teal">Time Segments</label>
-              <select multiple id="nds-segments" class="select select-bordered w-full h-48 bg-gw-dark">
+              <label class="block text-gw-orange text-xl font-bold mb-3 tracking-wide">Time Segments</label>
+              <select multiple id="nds-segments" class="select select-bordered select-lg w-full h-48 bg-gw-dark/90 text-white text-sm font-medium focus:outline-none focus:ring-4 focus:ring-gw-orange/50 focus:border-gw-orange transition-all duration-200 hover:bg-gw-dark/95">
               </select>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4 mb-6">
-            <input type="text" id="nds-start" placeholder="Custom GPS Start" class="input input-bordered bg-gw-dark">
-            <input type="text" id="nds-end" placeholder="Custom GPS End" class="input input-bordered bg-gw-dark">
+          <div class="grid grid-cols-2 gap-6 mb-10 max-w-2xl mx-auto">
+            <input type="text" id="nds-start" placeholder="Custom GPS Start" class="input input-bordered input-lg bg-gw-dark/80 text-white placeholder-gray-400 text-lg focus:ring-4 focus:ring-gw-orange/50 focus:border-gw-orange">
+            <input type="text" id="nds-end" placeholder="Custom GPS End" class="input input-bordered input-lg bg-gw-dark/80 text-white placeholder-gray-400 text-lg focus:ring-4 focus:ring-gw-orange/50 focus:border-gw-orange">
           </div>
-          <div class="flex flex-wrap gap-4 justify-center mt-8">
-            <button class="btn btn-wide bg-gw-teal hover:bg-gw-yellow text-black font-bold shadow-lg" onclick="refreshNDS()">
+          <div class="flex flex-wrap gap-8 justify-center mt-12">
+            <button class="btn btn-wide btn-lg bg-gw-teal hover:bg-gw-teal/80 text-black font-bold text-xl shadow-2xl transform hover:scale-105 transition">
               Refresh Lists
             </button>
-            <button id="nds-download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-gw-dark font-bold shadow-lg" onclick="startNDSDownload()">
-              <span class="loading loading-spinner loading-md hidden" id="nds-spinner"></span>
+            <button id="nds-download-btn" class="btn btn-wide btn-lg bg-gw-yellow hover:bg-gw-orange text-black font-bold text-xl shadow-2xl transform hover:scale-105 transition">
+              <span class="loading loading-spinner loading-lg hidden" id="nds-spinner"></span>
               Start NDS Fetch
             </button>
           </div>
@@ -165,10 +163,13 @@
 
       <!-- BULK NDS TAB -->
       <div id="bulk-tab" class="card bg-gw-card/80 backdrop-blur p-8 rounded-2xl shadow-2xl border border-gw-teal/20 hidden">
-        <h2 class="text-4xl font-bold mb-10 text-gw-teal text-center drop-shadow-lg">Bulk NDS – CSV Import</h2>
+        <h2 class="text-4xl font-bold mb-10 text-gw-yellow text-center drop-shadow-lg">
+          Bulk NDS – CSV Import
+        </h2>
+
         <div class="text-center py-20">
-          <p class="text-2xl text-gray-400 mb-6">Feature coming soon!</p>
-          <p class="text-lg text-gray-500">Upload channel list and time segments via CSV for batch fetching.</p>
+          <p class="text-3xl text-gray-300 mb-6 font-bold">Feature coming soon!</p>
+          <p class="text-xl text-gray-400">Upload a CSV with channel list and time segments for batch fetching.</p>
         </div>
       </div>
     </div>
@@ -176,7 +177,7 @@
     <!-- LIGO ASSOC SECTION -->
     <div id="assoc-section" class="hidden">
       <div class="card bg-gw-card/80 backdrop-blur p-10 rounded-2xl shadow-2xl border border-red-600/30">
-        <h2 class="text-4xl font-bold mb-10 text-red-500 text-center">LIGO Assoc – Restricted Data Access</h2>
+        <h2 class="text-4xl font-bold mb-10 text-red-500 text-center drop-shadow-lg">LIGO Assoc – Restricted Data Access</h2>
         <div class="alert alert-error shadow-lg max-w-3xl mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-8 w-8" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -197,16 +198,12 @@
     </div>
   </div>
 </div>
-
 <script>
-let zipTriggered = false;  // Prevents multiple ZIP downloads
+let zipTriggered = false; // Prevents multiple ZIP downloads
 // Tab switching
 function switchMainTab(tab) {
-  // Hide/show sections
   document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
   document.getElementById('assoc-section').classList.toggle('hidden', tab !== 'assoc');
-
-  // Active state styling
   document.getElementById('tab-public').classList.toggle('bg-gw-teal', tab === 'public');
   document.getElementById('tab-public').classList.toggle('text-black', tab === 'public');
   document.getElementById('tab-public').classList.toggle('text-gw-teal', tab !== 'public');
@@ -218,30 +215,33 @@ function switchMainTab(tab) {
 }
 
 function switchSubTab(sub) {
-  // Hide/show tabs
   document.getElementById('osdf-tab').classList.toggle('hidden', sub !== 'osdf');
   document.getElementById('nds-tab').classList.toggle('hidden', sub !== 'nds');
   document.getElementById('bulk-tab').classList.toggle('hidden', sub !== 'bulk');
 
-  // Active state styling
   const osdfBtn = document.getElementById('subtab-osdf');
   const ndsBtn = document.getElementById('subtab-nds');
   const bulkBtn = document.getElementById('subtab-bulk');
 
-  // Reset all
-  osdfBtn.className = 'px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 text-gw-teal hover:bg-gw-teal/20';
-  ndsBtn.className = 'px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 text-gw-orange hover:bg-gw-orange/20';
-  bulkBtn.className = 'px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 text-gw-yellow hover:bg-gw-yellow/20';
+  osdfBtn.classList.toggle('bg-gw-teal', sub === 'osdf');
+  osdfBtn.classList.toggle('text-black', sub === 'osdf');
+  osdfBtn.classList.toggle('text-gw-teal', sub !== 'osdf');
+  osdfBtn.classList.toggle('hover:bg-gw-teal/20', sub !== 'osdf');
+  osdfBtn.classList.toggle('shadow-md', sub === 'osdf');
 
-  // Activate selected
-  if (sub === 'osdf') {
-    osdfBtn.className += ' bg-gw-teal text-black shadow-md';
-  } else if (sub === 'nds') {
-    ndsBtn.className += ' bg-gw-orange text-black shadow-md';
-  } else if (sub === 'bulk') {
-    bulkBtn.className += ' bg-gw-yellow text-black shadow-md';
-  }
+  ndsBtn.classList.toggle('bg-gw-orange', sub === 'nds');
+  ndsBtn.classList.toggle('text-black', sub === 'nds');
+  ndsBtn.classList.toggle('text-gw-orange', sub !== 'nds');
+  ndsBtn.classList.toggle('hover:bg-gw-orange/20', sub !== 'nds');
+  ndsBtn.classList.toggle('shadow-md', sub === 'nds');
+
+  bulkBtn.classList.toggle('bg-gw-yellow', sub === 'bulk');
+  bulkBtn.classList.toggle('text-black', sub === 'bulk');
+  bulkBtn.classList.toggle('text-gw-yellow', sub !== 'bulk');
+  bulkBtn.classList.toggle('hover:bg-gw-yellow/20', sub !== 'bulk');
+  bulkBtn.classList.toggle('shadow-md', sub === 'bulk');
 }
+
 // === OSDF FUNCTIONS ===
 async function loadFrameTypes() {
   const det = document.getElementById('osdf-detector').value;
