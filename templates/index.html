@@ -1,18 +1,49 @@
 {% extends "base.html" %}
-{% block title %}GWeasy Web{% endblock %}
+{% block title %}GWcloud - Home{% endblock %}
+
 {% block content %}
-<div class="hero min-h-screen" style="background-color:#0D0D2B">
-  <div class="hero-overlay bg-opacity-60"></div>
-  <div class="hero-content text-center text-white">
-    <div class="max-w-4xl">
-      <h1 class="text-6xl font-bold mb-8 text-gw-yellow">GWeasy Web</h1>
-      <p class="text-2xl mb-12">Gravitational Wave Analysis in Your Browser – No Install Required</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <a href="/gravfetch" class="btn btn-lg bg-gw-teal hover:bg-gw-yellow text-black">Gravfetch →</a>
-        <a href="/omicron" class="btn btn-lg bg-gw-orange hover:bg-gw-yellow text-black">OMICRON →</a>
-      </div>
-      <p class="mt-16 text-gw-yellow text-xl">Now live at {{ request.url }}</p>
+<div class="min-h-screen bg-gradient-to-b from-gw-dark to-black flex items-center justify-center px-6">
+  <div class="max-w-5xl mx-auto text-center">
+    <!-- Logo / Title -->
+    <h1 class="text-7xl md:text-8xl font-extrabold text-gw-yellow drop-shadow-2xl mb-6 tracking-tight">
+      GWcloud
+    </h1>
+    <p class="text-3xl md:text-5xl font-light text-gw-teal mb-8">
+      GWeasy Web – Gravitational Wave Data at Your Fingertips
+    </p>
+    <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+      Fetch public strain data from LIGO, Virgo, and KAGRA. Download frames directly in your browser with live progress tracking.
+    </p>
+
+    <!-- Call to Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-8 justify-center items-center">
+      <a href="/gravfetch" class="btn btn-wide btn-lg bg-gw-teal hover:bg-gw-yellow text-black font-bold text-xl shadow-2xl transform hover:scale-105 transition">
+        Start Fetching Data
+      </a>
+      <a href="https://github.com/Shantanu-Parmar/GWcloud" target="_blank" class="btn btn-wide btn-lg bg-gw-dark border-2 border-gw-teal hover:bg-gw-teal/20 text-gw-teal font-bold text-xl shadow-2xl">
+        View on GitHub
+      </a>
     </div>
+
+    <!-- Features Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mt-20">
+      <div class="bg-gw-card/50 backdrop-blur p-8 rounded-2xl border border-gw-teal/30 shadow-xl">
+        <h3 class="text-2xl font-bold text-gw-yellow mb-4">Public OSDF Data</h3>
+        <p class="text-gray-300">Access O4a and earlier strain frames from GWOSC without credentials.</p>
+      </div>
+      <div class="bg-gw-card/50 backdrop-blur p-8 rounded-2xl border border-gw-teal/30 shadow-xl">
+        <h3 class="text-2xl font-bold text-gw-yellow mb-4">Live Terminal</h3>
+        <p class="text-gray-300">Real-time logs and automatic ZIP download when complete.</p>
+      </div>
+      <div class="bg-gw-card/50 backdrop-blur p-8 rounded-2xl border border-gw-teal/30 shadow-xl">
+        <h3 class="text-2xl font-bold text-gw-yellow mb-4">No Installation</h3>
+        <p class="text-gray-300">Run entirely in browser — powered by FastAPI and Azure.</p>
+      </div>
+    </div>
+
+    <footer class="mt-24 text-gray-500 text-sm">
+      © 2025 Shantanu Parmar • Built with FastAPI & Tailwind
+    </footer>
   </div>
 </div>
 {% endblock %}
