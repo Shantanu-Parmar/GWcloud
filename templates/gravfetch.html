@@ -21,8 +21,8 @@
            class="px-10 py-5 text-2xl font-bold rounded-xl transition-all duration-300 
                   text-gw-orange hover:bg-gw-orange/20"
            onclick="switchMainTab('assoc')">
-          LIGO Assoc (Restricted)
-        </a>
+            LIGO Assoc (Restricted)
+          </a>
       </div>
     </div>
 
@@ -174,23 +174,6 @@
       </div>
     </div>
 
-    <!-- LIGO ASSOC SECTION -->
-    <div id="assoc-section" class="hidden">
-      <div class="card bg-gw-card/80 backdrop-blur p-10 rounded-2xl shadow-2xl border border-red-600/30">
-        <h2 class="text-4xl font-bold mb-10 text-red-500 text-center drop-shadow-lg">LIGO Assoc – Restricted Data Access</h2>
-        <div class="alert alert-error shadow-lg max-w-3xl mx-auto">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-8 w-8" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <div>
-            <h3 class="font-bold text-lg">Restricted Access</h3>
-            <div>This feature requires LIGO.ORG authentication and access to internal data servers.</div>
-            <div class="mt-2">Available only in the desktop version of GWeasy with proper credentials.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- LIVE TERMINAL -->
     <div class="mt-16 card bg-black/90 p-8 rounded-2xl shadow-2xl border border-gw-teal/30">
       <h2 class="text-4xl font-bold mb-8 text-gw-teal text-center drop-shadow-lg">Live Terminal Output</h2>
@@ -336,7 +319,7 @@ async function startOSDFDownload() {
       successBox.innerHTML = `
         <p class="text-4xl font-bold text-green-400 mb-6">Download Complete!</p>
         <p class="text-2xl text-green-200 mb-4">Your gravitational wave data is downloading as a ZIP file</p>
-        <p class="text-xl text-green-300">Unzip it to access all .gwf files and fin.ffl</p>
+        <p class="text-xl text-green-300">Unzip it to access all .g.wf files and fin.ffl</p>
       `;
       term.appendChild(successBox);
       term.scrollTop = term.scrollHeight;
