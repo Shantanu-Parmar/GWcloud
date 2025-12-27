@@ -35,25 +35,31 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Detector</label>
-            <select id="osdf-detector" class="select select-bordered w-full bg-gw-dark/80 text-white" onchange="loadFrameTypes()">
-              <option value="">-- Select Detector --</option>
-              <option value="H">LIGO Hanford (H)</option>
-              <option value="L">LIGO Livingston (L)</option>
-              <option value="V">Virgo (V)</option>
-              <option value="K">KAGRA (K)</option>
-            </select>
+            <select id="osdf-detector" 
+                  class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium 
+                         focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow 
+                         transition-all duration-200 hover:bg-gw-dark/95">
+            <option value="">-- Select Detector --</option>
+            <option value="H">LIGO Hanford (H)</option>
+            <option value="L">LIGO Livingston (L)</option>
+            <option value="V">Virgo (V)</option>
+            <option value="K">KAGRA (K)</option>
+          </select>
           </div>
 
           <div>
             <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Frame Type</label>
-            <select id="osdf-frametype" class="select select-bordered w-full bg-gw-dark/80 text-white" onchange="loadOSDFSegments()">
-              <option>-- Select Detector First --</option>
+            <select id="osdf-frametype" class="select select-bordered select-lg w-full bg-gw-dark/90 text-white text-lg font-medium focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow transition-all duration-200 hover:bg-gw-dark/95">
+              <option>-- Select Frame Type --</option>
             </select>
           </div>
 
           <div>
             <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Available Segments</label>
-            <select multiple id="osdf-segments" class="select select-bordered w-full h-64 bg-gw-dark/80 text-white text-sm">
+            <select multiple id="osdf-segments" 
+                    class="select select-bordered select-lg w-full h-64 bg-gw-dark/90 text-white text-base font-medium 
+                           focus:outline-none focus:ring-4 focus:ring-gw-yellow/50 focus:border-gw-yellow 
+                           transition-all duration-200 hover:bg-gw-dark/95">
               <option disabled>Select frame type to load segments</option>
             </select>
           </div>
