@@ -64,16 +64,16 @@
           <input type="text" id="osdf-end" placeholder="Custom GPS End (optional)" class="input input-bordered bg-gw-dark/80 text-white placeholder-gray-400">
         </div>
 
-        <div class="flex flex-wrap gap-6 justify-center">
-          <button onclick="refreshOSDF()" class="btn btn-wide bg-gw-teal hover:bg-gw-teal/80 text-black font-bold shadow-xl">
+        <div class="flex flex-wrap gap-8 justify-center mt-12">
+          <button onclick="refreshOSDF()" class="btn btn-wide btn-lg bg-gw-teal hover:bg-gw-teal/80 text-black font-bold text-xl shadow-2xl transform hover:scale-105 transition">
             <span class="loading loading-spinner loading-sm hidden" id="refresh-spinner"></span>
             Refresh Lists
           </button>
-          <button onclick="startOSDFDownload()" id="download-btn" class="btn btn-wide bg-gw-yellow hover:bg-gw-orange text-black font-bold shadow-xl">
-            <span class="loading loading-spinner loading-md hidden" id="download-spinner"></span>
+          <button onclick="startOSDFDownload()" id="download-btn" class="btn btn-wide btn-lg bg-gw-yellow hover:bg-gw-orange text-black font-bold text-xl shadow-2xl transform hover:scale-105 transition">
+            <span class="loading loading-spinner loading-lg hidden" id="download-spinner"></span>
             Start OSDF Download
           </button>
-          <button onclick="stopExecution()" class="btn btn-wide bg-red-600 hover:bg-red-700 text-white font-bold shadow-xl">
+          <button onclick="stopExecution()" class="btn btn-wide btn-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xl shadow-2xl transform hover:scale-105 transition">
             Stop Execution
           </button>
         </div>
@@ -169,8 +169,8 @@
 
     <!-- LIVE TERMINAL -->
     <div class="mt-16 card bg-black/90 p-8 rounded-2xl shadow-2xl border border-gw-teal/30">
-      <h2 class="text-3xl font-bold mb-6 text-gw-teal text-center">Live Terminal Output</h2>
-      <pre id="terminal" class="text-cyan-300 font-mono text-sm h-96 overflow-y-auto p-6 bg-gray-900/90 rounded-xl border border-gray-700"></pre>
+      <h2 class="text-4xl font-bold mb-8 text-gw-teal text-center drop-shadow-lg">Live Terminal Output</h2>
+      <pre id="terminal" class="text-cyan-300 font-mono text-base h-96 overflow-y-auto p-8 bg-gray-900/95 rounded-2xl border-2 border-gw-teal/50 shadow-2xl"></pre>
     </div>
   </div>
 </div>
