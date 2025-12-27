@@ -8,23 +8,40 @@
       Gravfetch – Gravitational Wave Data Fetching
     </h1>
 
-    <!-- Main Tabs: Public vs LIGO Assoc -->
-    <div class="tabs tabs-boxed mb-12 justify-center bg-gw-card/40 backdrop-blur-sm">
-      <a id="tab-public" class="tab tab-lg tab-active text-gw-teal font-bold" onclick="switchMainTab('public')">
-        Public Data (GWOSC)
-      </a>
-      <a id="tab-assoc" class="tab tab-lg text-gw-orange font-bold" onclick="switchMainTab('assoc')">
-        LIGO Assoc (Restricted)
-      </a>
-    </div>
+      <!-- Main Tabs: Public vs LIGO Assoc -->
+      <div class="flex justify-center mb-12">
+        <div class="inline-flex rounded-2xl bg-gw-card/40 backdrop-blur-md p-2 shadow-2xl border border-gw-teal/30">
+          <a id="tab-public" 
+             class="px-10 py-5 text-2xl font-bold rounded-xl transition-all duration-300 
+                    bg-gw-teal text-black shadow-lg"
+             onclick="switchMainTab('public')">
+            Public Data (GWOSC)
+          </a>
+          <a id="tab-assoc" 
+             class="px-10 py-5 text-2xl font-bold rounded-xl transition-all duration-300 
+                    text-gw-orange hover:bg-gw-orange/20"
+             onclick="switchMainTab('assoc')">
+            LIGO Assoc (Restricted)
+          </a>
+        </div>
+      </div>
 
-    <!-- PUBLIC SECTION -->
-    <div id="public-section">
       <!-- Sub-tabs: OSDF / NDS / Bulk -->
-      <div class="tabs tabs-boxed mb-10 justify-center bg-gw-card/30">
-        <a id="subtab-osdf" class="tab tab-lg tab-active" onclick="switchSubTab('osdf')">OSDF Frames</a>
-        <a id="subtab-nds" class="tab tab-lg" onclick="switchSubTab('nds')">NDS Channel</a>
-        <a id="subtab-bulk" class="tab tab-lg" onclick="switchSubTab('bulk')">Bulk NDS</a>
+      <div class="flex justify-center mb-12">
+        <div class="inline-flex rounded-2xl bg-gw-card/50 backdrop-blur-md p-2 shadow-2xl border border-gw-teal/20 gap-2">
+          <a id="subtab-osdf" 
+             class="px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 
+                    bg-gw-teal text-black shadow-md"
+             onclick="switchSubTab('osdf')">OSDF Frames</a>
+          <a id="subtab-nds" 
+             class="px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 
+                    text-gw-orange hover:bg-gw-orange/20"
+             onclick="switchSubTab('nds')">NDS Channel</a>
+          <a id="subtab-bulk" 
+             class="px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 
+                    text-gw-yellow hover:bg-gw-yellow/20"
+             onclick="switchSubTab('bulk')">Bulk NDS</a>
+        </div>
       </div>
 
       <!-- OSDF TAB -->
@@ -185,21 +202,46 @@
 let zipTriggered = false;  // Prevents multiple ZIP downloads
 // Tab switching
 function switchMainTab(tab) {
+  // Hide/show sections
   document.getElementById('public-section').classList.toggle('hidden', tab !== 'public');
   document.getElementById('assoc-section').classList.toggle('hidden', tab !== 'assoc');
-  document.getElementById('tab-public').classList.toggle('tab-active', tab === 'public');
-  document.getElementById('tab-assoc').classList.toggle('tab-active', tab === 'assoc');
+
+  // Active state styling
+  document.getElementById('tab-public').classList.toggle('bg-gw-teal', tab === 'public');
+  document.getElementById('tab-public').classList.toggle('text-black', tab === 'public');
+  document.getElementById('tab-public').classList.toggle('text-gw-teal', tab !== 'public');
+  document.getElementById('tab-public').classList.toggle('hover:bg-gw-teal/20', tab !== 'public');
+
+  document.getElementById('tab-assoc').classList.toggle('bg-gw-orange', tab === 'assoc');
+  document.getElementById('tab-assoc').classList.toggle('text-black', tab === 'assoc');
+  document.getElementById('tab-assoc').classList.toggle('text-gw-orange', tab !== 'assoc');
 }
 
 function switchSubTab(sub) {
+  // Hide/show tabs
   document.getElementById('osdf-tab').classList.toggle('hidden', sub !== 'osdf');
   document.getElementById('nds-tab').classList.toggle('hidden', sub !== 'nds');
   document.getElementById('bulk-tab').classList.toggle('hidden', sub !== 'bulk');
-  document.getElementById('subtab-osdf').classList.toggle('tab-active', sub === 'osdf');
-  document.getElementById('subtab-nds').classList.toggle('tab-active', sub === 'nds');
-  document.getElementById('subtab-bulk').classList.toggle('tab-active', sub === 'bulk');
-}
 
+  // Active state styling
+  const osdfBtn = document.getElementById('subtab-osdf');
+  const ndsBtn = document.getElementById('subtab-nds');
+  const bulkBtn = document.getElementById('subtab-bulk');
+
+  // Reset all
+  osdfBtn.className = 'px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 text-gw-teal hover:bg-gw-teal/20';
+  ndsBtn.className = 'px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 text-gw-orange hover:bg-gw-orange/20';
+  bulkBtn.className = 'px-8 py-4 text-xl font-bold rounded-xl transition-all duration-300 text-gw-yellow hover:bg-gw-yellow/20';
+
+  // Activate selected
+  if (sub === 'osdf') {
+    osdfBtn.className += ' bg-gw-teal text-black shadow-md';
+  } else if (sub === 'nds') {
+    ndsBtn.className += ' bg-gw-orange text-black shadow-md';
+  } else if (sub === 'bulk') {
+    bulkBtn.className += ' bg-gw-yellow text-black shadow-md';
+  }
+}
 // === OSDF FUNCTIONS ===
 async function loadFrameTypes() {
   const det = document.getElementById('osdf-detector').value;
