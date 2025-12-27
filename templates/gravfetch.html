@@ -34,7 +34,7 @@
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
-            <label class="label text-gw-teal text-lg font-semibold">Detector</label>
+            <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Detector</label>
             <select id="osdf-detector" class="select select-bordered w-full bg-gw-dark/80 text-white" onchange="loadFrameTypes()">
               <option value="">-- Select Detector --</option>
               <option value="H">LIGO Hanford (H)</option>
@@ -45,14 +45,14 @@
           </div>
 
           <div>
-            <label class="label text-gw-teal text-lg font-semibold">Frame Type</label>
+            <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Frame Type</label>
             <select id="osdf-frametype" class="select select-bordered w-full bg-gw-dark/80 text-white" onchange="loadOSDFSegments()">
               <option>-- Select Detector First --</option>
             </select>
           </div>
 
           <div>
-            <label class="label text-gw-teal text-lg font-semibold">Available Segments</label>
+            <label class="block text-gw-teal text-xl font-bold mb-3 tracking-wide">Available Segments</label>
             <select multiple id="osdf-segments" class="select select-bordered w-full h-64 bg-gw-dark/80 text-white text-sm">
               <option disabled>Select frame type to load segments</option>
             </select>
